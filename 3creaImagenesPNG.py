@@ -21,7 +21,7 @@ def creaHistogramaDistGrados(nombre,nodos,ruta,file):
 	plt.ylabel('Frecuencia')
 	plt.xlabel('Grado')
 	plt.title('Distribucion de grados')
-	plt.savefig(ruta+"\\distGrados"+file+".png", dpi=200)
+	plt.savefig(ruta+"/distGrados"+file+".png", dpi=200)
 
 def getCoordinates(nodeId,nodos,contador):
 		"""calculates the coordinates of an node id according to the grid used by the simulation """
@@ -65,7 +65,7 @@ def draw_graph_grid(graphFile,nodes,ruta,file):
 	clb = plt.colorbar(nodes,cax=cax)
 	clb.set_label("Grado",size=12)
 	clb.ax.tick_params(labelsize=12)
-	plt.savefig(ruta+"\\img_"+file+".png", dpi=50)
+	plt.savefig(ruta+"/img_"+file+".png", dpi=50)
 
 def getCoordinatesAnillo(nodeId,nodos):
 	#transformacion de coordenadas polares a rectangulares:
@@ -104,29 +104,29 @@ def draw_graph_ring(graphFile,nodes,ruta,file):
 	clb = plt.colorbar(nodes,cax=cax)
 	clb.set_label("Grado",size=12)
 	clb.ax.tick_params(labelsize=12)
-	plt.savefig(ruta+"\\img_"+file+".png", dpi=50)
+	plt.savefig(ruta+"/img_"+file+".png", dpi=50)
 
-ejemplo_dir = 'C:\\Users\\VG\\Documents\\Formación'#este es el directorio que recorrere recursivamente
+ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
 #print(list(os.walk(ejemplo_dir)))
 for nombre_directorio, subdirectorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
 	ultima=nombre_directorio[len(nombre_directorio)-1]
 	penultima=nombre_directorio[len(nombre_directorio)-2]
 	ciclo1=""
-	lista=["\\1","\\2","\\3","\\4","\\5","\\6","\\7","\\8","\\9","10"]
+	lista=["/1","/2","/3","/4","/5","/6","/7","/8","/9","10"]
 	if(penultima+ultima in lista):
 		if penultima+ultima=="10":
 			ultima="10"
-		primero=open(nombre_directorio+"\\datos-salida_"+ultima+".txt","r")
+		primero=open(nombre_directorio+"/datos-salida_"+ultima+".txt","r")
 		lineasPrimero = primero.readlines()
 		primero.close()
 		ciclo1,AVCL,components,diam,APL,order = lineasPrimero[len(lineasPrimero)-1].split("\t")
 		if "malla" in nombre_directorio:
-			draw_graph_grid(nombre_directorio+"\\graph_test_"+ciclo1+".adjlist",50,nombre_directorio,"graph_test_"+ciclo1+".adjlist")
+			draw_graph_grid(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",50,nombre_directorio,"graph_test_"+ciclo1+".adjlist")
 			plt.close()
-			creaHistogramaDistGrados(nombre_directorio+"\\hist_test_"+ciclo1+".txt",2500,nombre_directorio,"hist_test_"+ciclo1+".txt")
+			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",2500,nombre_directorio,"hist_test_"+ciclo1+".txt")
 			plt.close()
 		else:
-			draw_graph_ring(nombre_directorio+"\\graph_test_"+ciclo1+".adjlist",1500,nombre_directorio,"graph_test_"+ciclo1+".adjlist")
+			draw_graph_ring(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",1500,nombre_directorio,"graph_test_"+ciclo1+".adjlist")
 			plt.close()
-			creaHistogramaDistGrados(nombre_directorio+"\\hist_test_"+ciclo1+".txt",1500,nombre_directorio,"hist_test_"+ciclo1+".txt")
+			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",1500,nombre_directorio,"hist_test_"+ciclo1+".txt")
 			plt.close()

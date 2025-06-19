@@ -2,9 +2,9 @@
 
 #tamaños de enlaces vs reglas de recableado
 #experimentos cooperadores:
-ejemplo_dir = 'C:\\Users\\VG\\Documents\\Formación'
-ejemplo_dir2 = 'C:\\Users\\VG\\Documents\\Degradación\\Ataques\\GrafosFinales'
-ejemplo_dir3 = 'C:\\Users\\VG\\Documents\\Degradación\\Fallas\\GrafosFinales'
+ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'
+ejemplo_dir2 = '/Users/daniela/Documents/Repositorios/ResultadosCN/Degradación/Ataques/GrafosFinales'
+ejemplo_dir3 = '/Users/daniela/Documents/Repositorios/ResultadosCN/Degradación/Fallas/GrafosFinales'
 tamEnlace=["D","D2","D4","D8","D16"]
 reglas=["R1","R2","R3"]
 topologias=["anillo1500","malla50x50"]
@@ -19,7 +19,7 @@ for p in topologias:
 				for k in tamEnlace:
 					escribir=[k]
 					for l in reglas:
-						arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+						arch=open(ejemplo_dir+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 						lineas=arch.readlines()
 						arch.close()
 						CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
@@ -31,7 +31,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
-							arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio_grados.csv","r")
+							arch=open(ejemplo_dir+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio_grados.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							escribir.append(str(len(lineas)-1))
@@ -40,7 +40,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
-							arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir2+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -51,7 +51,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
-							arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir2+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -61,7 +61,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
-							arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir3+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -72,7 +72,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
-							arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir3+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -95,7 +95,7 @@ for p in topologias:
 					escribir=[k+","]
 					for l in reglas:
 						try:
-							arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
@@ -114,7 +114,7 @@ for p in topologias:
 						escribir=[k+","]
 						for l in reglas:
 							try:
-								arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio_grados.csv","r")
+								arch=open(ejemplo_dir+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio_grados.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								escribir.append(str(len(lineas)-1)+",")
@@ -130,7 +130,7 @@ for p in topologias:
 						escribir=[k+","]
 						for l in reglas:
 							try:
-								arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir2+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -148,7 +148,7 @@ for p in topologias:
 						escribir=[k+","]
 						for l in reglas:
 							try:
-								arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir2+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -165,7 +165,7 @@ for p in topologias:
 						escribir=[k+","]
 						for l in reglas:
 							try:
-								arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir3+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -183,7 +183,7 @@ for p in topologias:
 						escribir=[k+","]
 						for l in reglas:
 							try:
-								arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir3+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -213,7 +213,7 @@ for p in topologias:
 				for k in tamEnlace:
 					escribir=[k]
 					for i in algEncam:
-						arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+						arch=open(ejemplo_dir+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 						lineas=arch.readlines()
 						arch.close()
 						CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
@@ -225,7 +225,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
-							arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio_grados.csv","r")
+							arch=open(ejemplo_dir+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio_grados.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							escribir.append(str(len(lineas)-1))
@@ -234,7 +234,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
-							arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir2+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -245,7 +245,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
-							arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir2+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -255,7 +255,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
-							arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir3+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -266,7 +266,7 @@ for p in topologias:
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
-							arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosCooperadores\\"+l+"\\"+p+"\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir3+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -289,7 +289,7 @@ for p in topologias:
 					escribir=[k+","]
 					for i in limitaciones:
 						try:
-							arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+							arch=open(ejemplo_dir+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
 							CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
@@ -308,7 +308,7 @@ for p in topologias:
 						escribir=[k+","]
 						for i in limitaciones:
 							try:
-								arch=open(ejemplo_dir+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio_grados.csv","r")
+								arch=open(ejemplo_dir+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio_grados.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								escribir.append(str(len(lineas)-1)+",")
@@ -324,7 +324,7 @@ for p in topologias:
 						escribir=[k+","]
 						for i in limitaciones:
 							try:
-								arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir2+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -342,7 +342,7 @@ for p in topologias:
 						escribir=[k+","]
 						for i in limitaciones:
 							try:
-								arch=open(ejemplo_dir2+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir2+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -359,7 +359,7 @@ for p in topologias:
 						escribir=[k+","]
 						for i in limitaciones:
 							try:
-								arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir3+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
@@ -377,7 +377,7 @@ for p in topologias:
 						escribir=[k+","]
 						for i in limitaciones:
 							try:
-								arch=open(ejemplo_dir3+"\\"+k+"\\ExperimentosSemi-Cooperadores\\"+l+"\\"+p+"\\SP\\"+i+"\\datos-promedio.csv","r")
+								arch=open(ejemplo_dir3+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 								lineas=arch.readlines()
 								arch.close()
 								CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")

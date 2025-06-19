@@ -1,17 +1,17 @@
 
 import os
 
-ejemplo_dir = 'C:\\Users\\VG\\Documents\\Formación'#este es el directorio que recorrere recursivamente
+ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
 
 for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
 	CANTIDADES=[]
 	if ("1" in directorios and "2" in directorios and "3" in directorios):
 		for contador,direc in enumerate(directorios):
-			archivo=open(nombre_directorio+"\\"+str(contador+1)+"\\datos-salida_"+str(contador+1)+".txt","r")
+			archivo=open(nombre_directorio+"/"+str(contador+1)+"/datos-salida_"+str(contador+1)+".txt","r")
 			lineas=archivo.readlines()
 			archivo.close()
 			ciclo,AVCL,components,diam,APL,order = lineas[len(lineas)-1].split("\t")
-			primero=open(nombre_directorio+"\\"+str(contador+1)+"\\hist_test_"+ciclo+".txt","r")
+			primero=open(nombre_directorio+"/"+str(contador+1)+"/hist_test_"+ciclo+".txt","r")
 			lineasPrimero = primero.readlines()
 			primero.close()
 			CANTIDAD_1=[]
@@ -34,7 +34,7 @@ for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro re
 				valor+=float(primero)
 			valor/=len(CANTIDADES)
 			CANTIDADES_PROMEDIO.append(valor)
-		datosPromedio=open(nombre_directorio+"\\datos-promedio_grados.csv","w")
+		datosPromedio=open(nombre_directorio+"/datos-promedio_grados.csv","w")
 		for i in range(maximo):
 			datosPromedio.write('{0:.6f}\n'.format(CANTIDADES_PROMEDIO[i]))
 		datosPromedio.close()
