@@ -6,7 +6,7 @@ condap="/Users/daniela/anaconda3/envs/networks/bin"
 declare -a arr=("D" "D2" "D4" "D8" "D16")
 for i in "${arr[@]}"
 do
-    cd Formación/$i/ExperimentosCooperadores/R1/anillo1500/CR
+    cd Formación/$i/ExperimentosCooperadores/R1/malla50x50/CR
     # You can access the array items using echo "${arr[0]}", "${arr[1]}" also
     x=1
     while [ $x -le 10 ]
@@ -21,13 +21,11 @@ do
         if [ "$1" = "1" ]
         then 
           echo "Trabajas con una malla"
-          #malla.adjlist es el grafo original
-          cp malla.adjlist $x/graph.adjlist
         else
-          #anillo.adjlist es el grafo original
           echo "Trabajas con un anillo"
-          cp anillo.adjlist $x/graph.adjlist
         fi
+        #graph.adjlist es el grafo original (malla o anillo) creado por main.py
+        cp graph.adjlist $x/graph.adjlist
         cd $x
         echo "Comienza extraccion de datos $x ..."
         $condap/python3 extractData.py salida_$x.txt  test
