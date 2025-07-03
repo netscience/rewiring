@@ -1,9 +1,8 @@
 
 import os
+import config_paths as paths
 
-ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
-
-for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
+for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	CANTIDADES=[]
 	if ("1" in directorios and "2" in directorios and "3" in directorios):
 		for contador,direc in enumerate(directorios):

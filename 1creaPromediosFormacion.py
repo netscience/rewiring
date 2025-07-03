@@ -1,10 +1,9 @@
 
 import os
 import numpy as np
+import config_paths as paths
 
-ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
-
-for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
+for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	AVCLUSTs=[]
 	APLs=[]
 	DIAMETERs=[]

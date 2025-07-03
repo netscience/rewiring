@@ -1,5 +1,4 @@
-
-directorio='/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'
+import config_paths as paths
 
 #PARA AGENTES COOPERADORES:
 tamEnlaces=["D","D2","D4","D8","D16"]
@@ -14,7 +13,7 @@ for i in reglas:
 			LIST_DIAMGEN=[]
 			LIST_GRAGEN=[]
 			for l in tamEnlaces:
-				primero=open(directorio+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio.csv","r")
+				primero=open(paths.RESULTADOS_DIR+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio.csv","r")
 				lineasPrimero = primero.readlines()
 				primero.close()
 				LIST_CAP=[]
@@ -28,7 +27,7 @@ for i in reglas:
 				LIST_CAPGEN.append(LIST_CAP)
 				LIST_LTPGEN.append(LIST_LTP)
 				LIST_DIAMGEN.append(LIST_DIAM)
-				grados=open(directorio+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio_grados.csv","r")
+				grados=open(paths.RESULTADOS_DIR+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio_grados.csv","r")
 				lineasgrados = grados.readlines()
 				grados.close()
 				LIST_GRAD=[]
@@ -37,7 +36,7 @@ for i in reglas:
 					LIST_GRAD.append(GRA)
 				LIST_GRAGEN.append(LIST_GRAD)
 			#escribo el archivo csv final de cada experimento de base
-			datosPromedio=open(directorio+"Gráficas_Formación/Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
+			datosPromedio=open(paths.RESULTADOS_DIR+"Gráficas_Formación/Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
 			datosPromedio.write(",Coeficiente de Agrupamiento\n,D,D2,D4,D8,D16\n")
 			for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 				datosPromedio.write(str(contador)+",")
@@ -89,7 +88,7 @@ for i in reglas:
 			LIST_GRAGEN=[]
 			for l in tamEnlaces:
 				try:
-					primero=open(directorio+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio.csv","r")
+					primero=open(paths.RESULTADOS_DIR+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio.csv","r")
 					lineasPrimero = primero.readlines()
 					primero.close()
 					LIST_CAP=[]
@@ -103,7 +102,7 @@ for i in reglas:
 					LIST_CAPGEN.append(LIST_CAP)
 					LIST_LTPGEN.append(LIST_LTP)
 					LIST_DIAMGEN.append(LIST_DIAM)
-					grados=open(directorio+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio_grados.csv","r")
+					grados=open(paths.RESULTADOS_DIR+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio_grados.csv","r")
 					lineasgrados = grados.readlines()
 					grados.close()
 					LIST_GRAD=[]
@@ -114,7 +113,7 @@ for i in reglas:
 				except FileNotFoundError as error:
 					pass
 			#escribo el archivo csv final de cada experimento de semi-cooperadores
-			datosPromedio=open(directorio+"Gráficas_Formación/Semi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
+			datosPromedio=open(paths.RESULTADOS_DIR+"Gráficas_Formación/Semi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
 			datosPromedio.write(",Coeficiente de Agrupamiento\n,D,D2,D4,D8,D16\n")
 			for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 				datosPromedio.write(str(contador)+",")

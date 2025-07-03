@@ -1,7 +1,8 @@
 
 import os
+import config_paths as paths
 
-ejemplo_dir = ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
+
 #este es el directorio que recorrere recursivamente
 
 anillo=[1500/4,1500/16,1500/64]
@@ -9,7 +10,7 @@ malla=[2500/4,2500/16,2500/64]
 datosPromedio=open("semi-cooperadores.csv","w")
 datosPromedio.write("Experimento,gradoMax,n/4,n/16,n/64\n")
 datosPromedio.close()
-for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
+for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	GRADOS=[]
 	if ("1" in directorios and "2" in directorios and "3" in directorios and "Semi" not in nombre_directorio):#donde encuentre los directorios de las 3 ejecuciones:
 		for contador,direc in enumerate(directorios):
@@ -34,7 +35,7 @@ for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro re
 					resultados.append("SI")
 				else:
 					resultados.append("NO")
-			datosPromedio.write(nombre_directorio.replace('/Users/daniela/Documents/Repositorios/ResultadosCN/Formación',"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
+			datosPromedio.write(nombre_directorio.replace(paths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
 			datosPromedio.close()
 		else:
 			datosPromedio=open("semi-cooperadores.csv","a")
@@ -44,5 +45,5 @@ for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro re
 					resultados.append("SI")
 				else:
 					resultados.append("NO")
-			datosPromedio.write(nombre_directorio.replace('/Users/daniela/Documents/Repositorios/ResultadosCN/Formación',"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
+			datosPromedio.write(nombre_directorio.replace(paths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
 			datosPromedio.close()

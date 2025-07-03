@@ -1,5 +1,4 @@
-
-directorio="/Users/daniela/Documents/Repositorios/ResultadosCN/Degradación/"
+import config_paths as paths
 
 #PARA AGENTES COOPERADORES:
 tiposDegradacion=["Fallas","Ataques"]
@@ -18,7 +17,7 @@ for p in tiposDegradacion:
 				LIST_ATTRGEN=[]
 				LIST_ASSORTGEN=[]
 				for l in tamEnlaces:
-					primero=open(directorio+p+"/GrafosFinales/"+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio.csv","r")
+					primero=open(paths.DEGRADACION_DIR+p+"/GrafosFinales/"+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio.csv","r")
 					lineasPrimero = primero.readlines()
 					primero.close()
 					LIST_CAP=[]
@@ -44,9 +43,9 @@ for p in tiposDegradacion:
 					LIST_ASSORTGEN.append(LIST_ASSORT)
 				#escribo el archivo csv final de cada experimento de base
 				if p=="Fallas":
-					datosPromedio=open(directorio+"Gráficas_Degradación_Fallas/FCooperadores_"+i+"_"+j+"_"+k+".csv","w")
+					datosPromedio=open(paths.DEGRADACION_DIR+"Gráficas_Degradación_Fallas/FCooperadores_"+i+"_"+j+"_"+k+".csv","w")
 				else:
-					datosPromedio=open(directorio+"Gráficas_Degradación_Ataques/ACooperadores_"+i+"_"+j+"_"+k+".csv","w")
+					datosPromedio=open(paths.DEGRADACION_DIR+"Gráficas_Degradación_Ataques/ACooperadores_"+i+"_"+j+"_"+k+".csv","w")
 				datosPromedio.write(",Coeficiente de Agrupamiento\n,D,D2,D4,D8,D16\n")
 				for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 					datosPromedio.write(str(contador)+",")
@@ -103,7 +102,7 @@ for p in tiposDegradacion:
 				LIST_ASSORTGEN=[]
 				for l in tamEnlaces:
 					try:
-						primero=open(directorio+p+"/GrafosFinales/"+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio.csv","r")
+						primero=open(paths.DEGRADACION_DIR+p+"/GrafosFinales/"+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio.csv","r")
 						lineasPrimero = primero.readlines()
 						primero.close()
 						LIST_CAP=[]
@@ -131,9 +130,9 @@ for p in tiposDegradacion:
 						pass
 				#escribo el archivo csv final de cada experimento de semi-cooperadores
 				if p=="Fallas":
-					datosPromedio=open(directorio+"Gráficas_Degradación_Fallas/FSemi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
+					datosPromedio=open(paths.DEGRADACION_DIR+"Gráficas_Degradación_Fallas/FSemi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
 				else:
-					datosPromedio=open(directorio+"Gráficas_Degradación_Ataques/ASemi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
+					datosPromedio=open(paths.DEGRADACION_DIR+"Gráficas_Degradación_Ataques/ASemi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
 				datosPromedio.write(",Coeficiente de Agrupamiento\n,D,D2,D4,D8,D16\n")
 				for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 					datosPromedio.write(str(contador)+",")

@@ -1,9 +1,11 @@
 #!/bin/bash
+source config.sh  # o . config.sh
+
 declare -a arr=("D" "D2" "D4" "D8" "D16")
 for i in "${arr[@]}"
 do
-    cp hubDegradation.py '/Users/daniela/Documents/Repositorios/ResultadosCN/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR
-    cd /Users/daniela/Documents/Repositorios/ResultadosCN/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR
+    cp hubDegradation.py $HOME$RESULTADOS_DIR/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR
+    cd $HOME$RESULTADOS_DIR/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR
     x=1
     while [ $x -le 10 ]
     do
@@ -16,7 +18,7 @@ do
            archivo=graph_test_$c.adjlist
            if [ -f $archivo ]
            then
-                python3 hubDegradation.py $archivo /Users/daniela/Documents/Repositorios/ResultadosCN/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR/$x/
+                python3 hubDegradation.py $archivo $HOME$RESULTADOS_DIR/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR/$x/
                 break
            else
                 echo "$archivo NO existe"

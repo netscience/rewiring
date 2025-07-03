@@ -1,8 +1,8 @@
 #!/bin/bash
-#activa el ambiente de conda
-echo "Define el path del ambiente conda"
-condap="/Users/daniela/anaconda3/envs/networks/bin"
 #pasar como argumento un 1 si se trabaja con malla o un 3 si se trabaja con anillo
+#activa el ambiente de conda
+# Cargar las variables desde config.sh
+source config.sh  # o . config.sh
 declare -a arr=("D" "D2" "D4" "D8" "D16")
 for i in "${arr[@]}"
 do
@@ -15,7 +15,7 @@ do
         mkdir $x
         #python se ejecuta desde el environment
         #python3 main.py > $x/salida_$x.txt 
-        $condap/python3 main.py > $x/salida_$x.txt
+        $HOME$CONDA_DIR/python3 main.py > $x/salida_$x.txt
         echo "Termina la simulacion $x"
         cp extractData.py $x
         if [ "$1" = "1" ]
@@ -28,10 +28,10 @@ do
         cp graph.adjlist $x/graph.adjlist
         cd $x
         echo "Comienza extraccion de datos $x ..."
-        $condap/python3 extractData.py salida_$x.txt  test
+        $HOME$CONDA_DIR/python3 extractData.py salida_$x.txt  test
         echo "Termina extraccion de datos $x"
         cd ..
     x=$(( $x + 1 ))
     done
-    cd ~  
+    cd $HOME$RESULTADOS_DIR 
 done

@@ -2,13 +2,13 @@
 import os
 import networkx as nx
 import shutil
-
-ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
+import config_paths as paths
 
 #print(list(os.walk(ejemplo_dir)))
 
-for nombre_directorio, subdirectorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
+for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	if len(subdirectorios)==0:
+		shutil.copy2("main.py", nombre_directorio+"/")
 		shutil.copy2("complexNetwork.py", nombre_directorio+"/")
 		shutil.copy2("encaminamiento.py", nombre_directorio+"/")
 		shutil.copy2("enlace.py", nombre_directorio+"/")

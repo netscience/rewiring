@@ -9,21 +9,22 @@ from complexNetwork import ComplexNetwork
 from event import Event
 from random import uniform
 from paquete import Paquete
+import config
 import operator
 
 class Main:#hereda de la clase object, hay que recordar que en Python todo es un objeto
 
 	def __init__(self):
 		#--------ANILLO------------------
-		self.__nodes=1500                # Número de nodos del anillo
+		self.__nodes=config.NODOS_ANILLO # Número de nodos del anillo
 		self.__diametro=20               # Se asume que el radio del anillo es 10 unidades
 		#--------MALLA-------------------
-		self.__rows=50                   # Filas de la malla
-		self.__columns=50                # Columnas de la malla
+		self.__rows=config.ROWS          # Filas de la malla
+		self.__columns=config.COLUMNS    # Columnas de la malla
 		self.__diagonal=self.diag()      # Longitud de la diagonal principal de la malla
 		#--------------------------------
-		self.__ciclos=50                 # Número de ciclos de simulación
-		self.__tamEnlace=self.__diametro # Longitud máxima del enlace dinámico, se puede ajustar con self.__diagonal para la malla y self.__diametro para el anillo
+		self.__ciclos=config.CICLOS      # Número de ciclos de simulación
+		self.__tamEnlace=self.__diagonal # Longitud máxima del enlace dinámico, se puede ajustar con self.__diagonal para la malla y self.__diametro para el anillo
 		self.__grafo=-1                  # Topología sobre la que se desarrollará la simulación
 		self.__graph = None              # Grafo NetworkX sobre el que se desarrollará la simulación
 		self.__coordinador=1             # Identificador del nodo coordinador de la simulación
@@ -34,6 +35,7 @@ class Main:#hereda de la clase object, hay que recordar que en Python todo es un
 	def createGrid(self):
 		self.__graph = nx.grid_2d_graph(self.__rows,self.__columns,periodic=False)
 		self.__graph = nx.convert_node_labels_to_integers(self.__graph,first_label=1,ordering="sorted")
+		self.__tamEnlace=self.__diagonal / config.LONG_ENLACE
 		nx.write_adjlist(self.__graph,"graph.adjlist")
 
 	def diag(self):
@@ -47,6 +49,7 @@ class Main:#hereda de la clase object, hay que recordar que en Python todo es un
 	def createRing(self):
 		self.__graph = nx.circulant_graph(self.__nodes, [1])
 		self.__graph = nx.convert_node_labels_to_integers(self.__graph,first_label=1,ordering="sorted")
+		self.__tamEnlace=self.__diametro / config.LONG_ENLACE
 		nx.write_adjlist(self.__graph,"graph.adjlist")
 
 	#---GETTERS y SETTERS------------------
@@ -102,7 +105,7 @@ if __name__ == "__main__":
 	#Se selecciona el grafo con el que se trabajará en la simulación
 	#1.- Malla
 	#3.- Anillo
-	main.grafo=3
+	main.grafo=1
 	if(main.grafo==1):
 		main.createGrid()
 		main.nodosTotales=main.rows*main.columns
@@ -127,7 +130,7 @@ if __name__ == "__main__":
 		#opciones de algoritmo de encaminamiento: "COMPASS-ROUTING", "RANDOM-WALK", "SHORTEST-PATH"
 		#el sexto parámetro indica el número de la regla de recableado que el nodo ejecutará en la fase de negociación
 		#opciones de reglas de recableado: R1=>1, R2=>2, R3=>3
-		m = ComplexNetwork(main,2,main.nodosTotales/100,20,"SHORTEST-PATH",3)
+		m = ComplexNetwork(main,config.ENLACES_DINAMICOS,main.nodosTotales/config.DIV_CONEXIONES,config.EXPLORADORES,config.ROUTING,config.REGLA)
 		experiment.setModel(m, i)
 	#inserta un evento semilla en la agenda y arranca
 	#para comenzar la simulacion el coordinador arranca un PIF en donde avisará a todos que hagan su fase de EXPOLRACIÓN

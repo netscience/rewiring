@@ -5,11 +5,11 @@ from math import ceil
 import matplotlib.pyplot as plt
 import numpy as np
 import networkx as nx
+import config_paths as paths
 
-ejemplo_dir = '/Users/daniela/Documents/Repositorios/ResultadosCN/Formación'#este es el directorio que recorrere recursivamente
 muestrasAnillo=[]
 muestrasMalla=[]
-for nombre_directorio, subdirectorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
+for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	if("1" in subdirectorios and "2" in subdirectorios and "3" in subdirectorios):
 		primero=open(nombre_directorio+"/datos-promedio.csv","r")
 		lineasPrimero = primero.readlines()
@@ -117,7 +117,7 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(ejemplo_dir):#recorro
 		b1,b2,b3,b4,MODULARITYstd2 = lineasPrimero[len(lineasPrimero)-1].split(",")
 		MUATTR2=round(float(MUATTR2),2)
 		coefAgr2,APL2,diameter2,ORCG2,A2TR2,b6 = lineasPrimero[int(MUATTR2*100)-1].split(",")
-		muestra=[nombre_directorio.replace('/Users/daniela/Documents/Repositorios/ResultadosCN/Formación',"").replace("Experimentos","").replace("Cooperadores","Coop"),round(float(tamano),3),round(float(densPro),3),round(float(minimo),3),round(float(maximo),3),round(float(media),3),round(float(stdDev),3),round(float(AVCL),3),round(float(AVCLstd),3),round(float(cicloEstableAVCL),3),round(float(LTP),3),round(float(LTPstd),3),round(float(cicloEstableLTP),3),round(float(DIAM),3),round(float(DIAMstd.replace("\n","")),3),round(float(cicloEstableDIAM),3),round(float(MODULARITY.replace("\n","")),3),round(float(MODULARITYstd.replace("\n","")),3),round(float(ASSORT.replace("\n","")),3),MUATTR,round(float(MUATTRstd.replace("\n","")),3),round(float(A2TR),3),round(float(ORCG),3),round(float(APL),3),round(float(diameter),3),MUATTR2,round(float(MUATTRstd2.replace("\n","")),3),round(float(A2TR2),3),round(float(ORCG2),3),round(float(APL2),3),round(float(diameter2),3)]
+		muestra=[nombre_directorio.replace(paths.RESULTADOS_DIR,"").replace("Experimentos","").replace("Cooperadores","Coop"),round(float(tamano),3),round(float(densPro),3),round(float(minimo),3),round(float(maximo),3),round(float(media),3),round(float(stdDev),3),round(float(AVCL),3),round(float(AVCLstd),3),round(float(cicloEstableAVCL),3),round(float(LTP),3),round(float(LTPstd),3),round(float(cicloEstableLTP),3),round(float(DIAM),3),round(float(DIAMstd.replace("\n","")),3),round(float(cicloEstableDIAM),3),round(float(MODULARITY.replace("\n","")),3),round(float(MODULARITYstd.replace("\n","")),3),round(float(ASSORT.replace("\n","")),3),MUATTR,round(float(MUATTRstd.replace("\n","")),3),round(float(A2TR),3),round(float(ORCG),3),round(float(APL),3),round(float(diameter),3),MUATTR2,round(float(MUATTRstd2.replace("\n","")),3),round(float(A2TR2),3),round(float(ORCG2),3),round(float(APL2),3),round(float(diameter2),3)]
 		if "anillo" in nombre_directorio:
 			muestrasAnillo.append(muestra)
 		else:
