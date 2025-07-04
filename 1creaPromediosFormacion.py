@@ -2,14 +2,19 @@
 import os
 import numpy as np
 import config_paths as paths
+import config
 
 for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	AVCLUSTs=[]
 	APLs=[]
 	DIAMETERs=[]
+	if '__pycache__' in directorios:
+		directorios.remove('__pycache__')
+
 	if ("1" in directorios and "2" in directorios and "3" in directorios):
 		for contador,direc in enumerate(directorios):
-			archivo=open(nombre_directorio+"/"+str(contador+1)+"/datos-salida_"+str(contador+1)+".txt","r")
+			datos_salida = nombre_directorio+"/"+str(contador+1)+"/datos-salida_"+str(contador+1)+".txt"
+			archivo=open(datos_salida,"r")
 			lineas=archivo.readlines()
 			archivo.close()
 			AVCLUST_1=[]
@@ -35,10 +40,10 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 						AVCLUST_1.append(float(AVCL))
 						APL_1.append(float(APL))
 						DIAMETER_1.append(float(diam))	
-			#verifico que se hayan terminado los 50 ciclos en el archivo:
-			if len(AVCLUST_1)<51:
-				#si no se ejecutaron los 50 ciclos repito los datos del ultimo ciclo ejecutado hasta completar los 50 ciclos:
-				faltantes=51-len(AVCLUST_1)
+			#verifico que se hayan terminado todos los ciclos en el archivo:
+			if len(AVCLUST_1)<config.CICLOS+1:
+				#si no se ejecutaron todos los ciclos repito los datos del ultimo ciclo ejecutado hasta completar los 50 ciclos:
+				faltantes=config.CICLOS+1-len(AVCLUST_1)
 				AVCLUST_1_FINAL=AVCLUST_1[len(AVCLUST_1)-1]
 				APL_1_FINAL=APL_1[len(APL_1)-1]
 				DIAMETER_1_FINAL=DIAMETER_1[len(DIAMETER_1)-1]
@@ -56,7 +61,7 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 		STDAVCL=[]
 		STDAPL=[]
 		STDDIAM=[]
-		for i in range(51):
+		for i in range(config.CICLOS+1):
 			AVGAVCL=0
 			AVGAPL=0
 			AVGDIAM=0
@@ -80,7 +85,9 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 			STDAPL.append(np.std(stdAPL))
 			STDDIAM.append(np.std(stdDIAM))
 		datosPromedio=open(nombre_directorio+"/datos-promedio.csv","w")
-		for i in range(51):
+		datosPromedio.write("ciclo,avCl,aslp,dia,std_avCL,std_aspl,std_dia\n")
+		for i in range(config.CICLOS+1):
+			datosPromedio.write(str(i)+',')
 			datosPromedio.write('{0:.3f},'.format(AVCL_AVERAGE[i]))
 			datosPromedio.write('{0:.3f},'.format(APL_AVERAGE[i]))
 			datosPromedio.write('{0:.3f},'.format(DIAMETER_AVERAGE[i]))

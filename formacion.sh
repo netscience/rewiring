@@ -6,7 +6,7 @@ source config.sh  # o . config.sh
 declare -a arr=("D" "D2" "D4" "D8" "D16")
 for i in "${arr[@]}"
 do
-    cd Formación/$i/ExperimentosCooperadores/R1/malla50x50/CR
+    cd Formación/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING
     # You can access the array items using echo "${arr[0]}", "${arr[1]}" also
     x=1
     while [ $x -le 10 ]
@@ -33,5 +33,5 @@ do
         cd ..
     x=$(( $x + 1 ))
     done
-    cd $HOME$RESULTADOS_DIR 
+    cd $HOME$RESULTADOS_DIR
 done

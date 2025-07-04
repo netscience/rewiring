@@ -5,6 +5,8 @@ import config_paths as paths
 for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	CANTIDADES=[]
 	if ("1" in directorios and "2" in directorios and "3" in directorios):
+		if '__pycache__' in directorios:
+			directorios.remove('__pycache__')
 		for contador,direc in enumerate(directorios):
 			archivo=open(nombre_directorio+"/"+str(contador+1)+"/datos-salida_"+str(contador+1)+".txt","r")
 			lineas=archivo.readlines()
@@ -34,7 +36,9 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 			valor/=len(CANTIDADES)
 			CANTIDADES_PROMEDIO.append(valor)
 		datosPromedio=open(nombre_directorio+"/datos-promedio_grados.csv","w")
+		datosPromedio.write('grado,prom_nodos\n')
 		for i in range(maximo):
+			datosPromedio.write(str(i)+',')
 			datosPromedio.write('{0:.6f}\n'.format(CANTIDADES_PROMEDIO[i]))
 		datosPromedio.close()
 	"""for nombre_subdirectorio in directorios:

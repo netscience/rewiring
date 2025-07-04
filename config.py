@@ -13,4 +13,7 @@ CICLOS=5                    # Número de ciclos de simulación
 #--------EXTRAS------------------
 ENLACES_DINAMICOS=2         # Número de enlaces dinámicos por nodo
 EXPLORADORES=20             # Número de paquetes exploradores por ciclo
-DIV_CONEXIONES=100          # Divisor (con respecto al número de nodos, num_nodos/DIV_CONEXIONES) del máximo número de conexiones permitidas
+DIV_CONEXIONES=1          # Divisor (con respecto al número de nodos, num_nodos/DIV_CONEXIONES) del máximo número de conexiones permitidas
+#--------VISUALIZACION-----------
+#Parameteros para 3creaImagenesPNG.py
+NODE_SCALE = 10 #Usar 1 para orden de anillo=1500 y orde de malla=2500

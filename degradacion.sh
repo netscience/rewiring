@@ -29,5 +29,5 @@ do
         cd ..
     x=$(( $x + 1 ))
     done
-    cd ~
+    cd $HOME$RESULTADOS_DIR
 done
