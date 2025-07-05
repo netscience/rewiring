@@ -1,24 +1,25 @@
 #!/bin/bash
 source config.sh  # o . config.sh
 
-declare -a arr=("D" "D2" "D4" "D8" "D16")
-for i in "${arr[@]}"
+for i in "${ARR[@]}"
 do
-    cp hubDegradation.py $HOME$RESULTADOS_DIR/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR
-    cd $HOME$RESULTADOS_DIR/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR
+    cp config.py $HOME$RESULTADOS_DIR/Degradación/$DEGRADACION/GrafosFinales/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING
+    cp $FILE_DEGRADATION $HOME$RESULTADOS_DIR/Degradación/$DEGRADACION/GrafosFinales/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING
+    cd $HOME$RESULTADOS_DIR/Degradación/$DEGRADACION/GrafosFinales/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING
     x=1
     while [ $x -le 10 ]
     do
-        cp hubDegradation.py $x
+        cp config.py $x
+        cp $FILE_DEGRADATION $x
         cd $x
-        echo "Comienza degradacion por ataques $x del grafo del utlimo ciclo de simulacion..."
-        c=50
+        echo "Comienza degradacion por $DEGRADACION $x del grafo del utlimo ciclo de simulacion..."
+        c=$CICLOS
         while [ $c -ge 1 ]
         do
            archivo=graph_test_$c.adjlist
            if [ -f $archivo ]
            then
-                python3 hubDegradation.py $archivo $HOME$RESULTADOS_DIR/Degradación/Ataques/GrafosFinales/$i/ExperimentosCooperadores/R1/anillo1500/CR/$x/
+                python3 $FILE_DEGRADATION $archivo $HOME$RESULTADOS_DIR/Degradación/$DEGRADACION/GrafosFinales/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING/$x/
                 break
            else
                 echo "$archivo NO existe"

@@ -1,17 +1,18 @@
 
 import os
 import config_paths as paths
+import config
 
-
-#este es el directorio que recorrere recursivamente
-
-anillo=[1500/4,1500/16,1500/64]
-malla=[2500/4,2500/16,2500/64]
+nodos_malla = config.COLUMNS*config.ROWS
+anillo=[config.NODOS_ANILLO/4,config.NODOS_ANILLO/8,config.NODOS_ANILLO/16]
+malla=[nodos_malla/4,nodos_malla/8,nodos_malla/16]
 datosPromedio=open("semi-cooperadores.csv","w")
-datosPromedio.write("Experimento,gradoMax,n/4,n/16,n/64\n")
+datosPromedio.write("Experimento,gradoMax,n/4,n/8,n/16\n")
 datosPromedio.close()
 for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	GRADOS=[]
+	if '__pycache__' in directorios:
+		directorios.remove('__pycache__')
 	if ("1" in directorios and "2" in directorios and "3" in directorios and "Semi" not in nombre_directorio):#donde encuentre los directorios de las 3 ejecuciones:
 		for contador,direc in enumerate(directorios):
 			archivo=open(nombre_directorio+"/"+str(contador+1)+"/datos-salida_"+str(contador+1)+".txt","r")
@@ -27,23 +28,22 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 		for i in GRADOS:
 			gradoMedio+=i
 		gradoMedio/=len(GRADOS)
+		datosPromedio=open("semi-cooperadores.csv","a")
+		resultados=[str(round(gradoMedio,4))]
+		#Indica SI el grado promedio es mayor que 3 veces nodos/{4, 8, 16}
 		if "anillo" in nombre_directorio:
-			datosPromedio=open("semi-cooperadores.csv","a")
-			resultados=[str(round(gradoMedio,4))]
 			for j in anillo:
 				if gradoMedio/j>=3:
 					resultados.append("SI")
 				else:
 					resultados.append("NO")
-			datosPromedio.write(nombre_directorio.replace(paths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
-			datosPromedio.close()
 		else:
-			datosPromedio=open("semi-cooperadores.csv","a")
-			resultados=[str(round(gradoMedio,4))]
 			for j in malla:
+				#print("Grado medio: ", gradoMedio)
+				#print("Grado medio / j: ", gradoMedio/j)
 				if gradoMedio/j>=3:
 					resultados.append("SI")
 				else:
 					resultados.append("NO")
-			datosPromedio.write(nombre_directorio.replace(paths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
-			datosPromedio.close()
+		datosPromedio.write(nombre_directorio.replace(paths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
+		datosPromedio.close()

@@ -2,6 +2,7 @@
 import sys
 import networkx as nx
 import collections
+import config
 
 def create_datafile():
     """Crea el archivo donde se almacenarán los datos de la degradación"""
@@ -75,7 +76,6 @@ def graph_properties(G):
 
 def hub_degradation():
     """Degrada un grafo hasta que ya no tiene nodos, simulando ataques intencionados hacia los hubs del grafo"""
-    save_step=0.01  #Guardamos datos cada que elimino x% de los nodos
     deleted_nodes = []
     initial_order = G.order()
     cont = 0
@@ -88,7 +88,7 @@ def hub_degradation():
         G.remove_node(target_node)
         deleted_nodes.append(target_node)
         cont += 1
-        if ((cont == (initial_order*save_step)) or (G.order()==1)):
+        if ((cont == config.SAVE_STEP) or (G.order()==1)):
             graph_properties(G)
             cont = 0
     with open (ruta+'AttackSequence.txt','w') as seq:

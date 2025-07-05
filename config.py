@@ -4,7 +4,7 @@ NODOS_ANILLO=1500           # Número de nodos del anillo
 #--------MALLA-------------------
 ROWS=8                      # Filas de la malla
 COLUMNS=8                   # Columnas de la malla
-#--------EXPERIMENTO-------------
+#--------FORMACION-------------
 ROUTING="COMPASS-ROUTING"   # Algoritmo de encaminamiento: "COMPASS-ROUTING", "RANDOM-WALK", "SHORTEST-PATH"
 REGLA=1                     # 1,2,3
 LONG_ENLACE=1               # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
@@ -17,3 +17,5 @@ DIV_CONEXIONES=1          # Divisor (con respecto al número de nodos, num_nodos
 #--------VISUALIZACION-----------
 #Parameteros para 3creaImagenesPNG.py
 NODE_SCALE = 10 #Usar 1 para orden de anillo=1500 y orde de malla=2500
+#-------DEGRADACION------------
+SAVE_STEP=4                 #Cada cuántos ataques registra medidas

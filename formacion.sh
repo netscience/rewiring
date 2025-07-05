@@ -3,7 +3,6 @@
 #activa el ambiente de conda
 # Cargar las variables desde config.sh
 source config.sh  # o . config.sh
-declare -a arr=("D" "D2" "D4" "D8" "D16")
 for i in "${arr[@]}"
 do
     cd Formación/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING

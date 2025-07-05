@@ -3,6 +3,7 @@ import sys
 import networkx as nx
 import random
 import collections
+import config
 
 def create_datafile():
     """Crea el archivo donde se almacenarán los datos de la degradación"""
@@ -76,7 +77,6 @@ def graph_properties(G):
 
 def failure_degradation():
     """Degrada un grafo hasta que ya no tiene nodos, simulando fallos aleatorios"""
-    save_step=0.01  #Guardamos datos cada que elimino x% de los nodos
     deleted_nodes = []
     initial_order = G.order()
     cont = 0
@@ -89,7 +89,7 @@ def failure_degradation():
         G.remove_node(random_node)
         deleted_nodes.append(random_node)
         cont += 1
-        if ((cont == (initial_order*save_step)) or (G.order()==1)):
+        if ((cont == config.SAVE_STEP) or (G.order()==1)):
             graph_properties(G)
             cont = 0
     with open (ruta+'FailureSequence.txt','w') as seq:
