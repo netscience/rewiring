@@ -6,6 +6,7 @@ import os
 import networkx as nx
 import networkx.algorithms.community as nx_comm
 import numpy as np
+import config_paths as paths
 
 def getA2TR(G):
 	N = nx.number_of_nodes(G)
@@ -26,7 +27,7 @@ def loadSequence(sFile):
 	return sequence
 
 if __name__ == "__main__":
-	ejemplo_dir = 'Degradación'#este es el directorio que recorrere recursivamente
+	ejemplo_dir = paths.DEGRADACION_DIR #este es el directorio que recorrere recursivamente
 	for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
 		if ("1" in directorios and "2" in directorios and "3" in directorios):
 			print(nombre_directorio)
@@ -123,19 +124,21 @@ if __name__ == "__main__":
 				ORDEN_RELATIVO_CG_AVERAGE.append(ROGC_AVG/len(AVCLUSTs))
 				ATTR_AVERAGE.append(ATTR_AVG/len(AVCLUSTs))
 			datosPromedio=open(nombre_directorio+"/datos-promedio.csv","w")
+			datosPromedio.write('avg_clustering,aslp,avg_diameter,rolcc,avg_assot\n')
 			for i in range(len(AVCLUST_1)):
 				datosPromedio.write('{0:.6f},'.format(AVCL_AVERAGE[i]))
 				datosPromedio.write('{0:.6f},'.format(APL_AVERAGE[i]))
 				datosPromedio.write('{0:.6f},'.format(DIAMETER_AVERAGE[i]))
 				datosPromedio.write('{0:.6f},'.format(ORDEN_RELATIVO_CG_AVERAGE[i]))
-				datosPromedio.write('{0:.6f},'.format(ATTR_AVERAGE[i]))
+				#datosPromedio.write('{0:.6f},'.format(ATTR_AVERAGE[i]))
 				datosPromedio.write('{0:.6f}\n'.format(ASSORT_AVERAGE[i]))
 			MUA2TR=np.mean(MUATTRs)
 			MUA2TRstd=np.std(MUATTRs)
 			MODULARIDAD=np.mean(MODULARITYs)
 			MODULARIDADstd=np.std(MODULARITYs)
-			datosPromedio.write(',,,,{0:.6f}\n'.format(MUA2TR))
-			datosPromedio.write(',,,,{0:.6f}\n'.format(MODULARIDAD))
-			datosPromedio.write(',,,,{0:.6f}\n'.format(MUA2TRstd))
-			datosPromedio.write(',,,,{0:.6f}\n'.format(MODULARIDADstd))
-			datosPromedio.close()
+			attrPromedio=open(nombre_directorio+"/attr-promedio.csv","w")
+			attrPromedio.write('AVG_MUA2TR,{0:.6f}\n'.format(MUA2TR))
+			attrPromedio.write('AVG_Modularity,{0:.6f}\n'.format(MODULARIDAD))
+			attrPromedio.write('STD_MUA2TR,{0:.6f}\n'.format(MUA2TRstd))
+			attrPromedio.write('STD_Modularity,{0:.6f}\n'.format(MODULARIDADstd))
+			attrPromedio.close()

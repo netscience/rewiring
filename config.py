@@ -5,6 +5,7 @@ NODOS_ANILLO=1500           # Número de nodos del anillo
 ROWS=8                      # Filas de la malla
 COLUMNS=8                   # Columnas de la malla
 #--------FORMACION-------------
+RED="malla"
 ROUTING="COMPASS-ROUTING"   # Algoritmo de encaminamiento: "COMPASS-ROUTING", "RANDOM-WALK", "SHORTEST-PATH"
 REGLA=1                     # 1,2,3
 LONG_ENLACE=1               # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
