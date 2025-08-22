@@ -122,13 +122,13 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR)
 		primero.close()
 		ciclo1,AVCL,components,diam,APL,order = lineasPrimero[len(lineasPrimero)-1].split("\t")
 		if "malla" in nombre_directorio:
-			draw_graph_grid(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",config.COLUMNS,nombre_directorio,"graph_test_"+ciclo1+".adjlist")
+			draw_graph_grid(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",config.COLUMNS,nombre_directorio,"graph_test_"+ciclo1)
 			plt.close()
 			nodos_malla = config.COLUMNS*config.ROWS
-			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",nodos_malla,nombre_directorio,"hist_test_"+ciclo1+".txt")
+			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",nodos_malla,nombre_directorio,"hist_test_"+ciclo1)
 			plt.close()
 		else:
-			draw_graph_ring(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",config.NODOS_ANILLO,nombre_directorio,"graph_test_"+ciclo1+".adjlist")
+			draw_graph_ring(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",config.NODOS_ANILLO,nombre_directorio,"graph_test_"+ciclo1)
 			plt.close()
-			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",config.NODOS_ANILLO,nombre_directorio,"hist_test_"+ciclo1+".txt")
+			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",config.NODOS_ANILLO,nombre_directorio,"hist_test_"+ciclo1)
 			plt.close()

@@ -7,7 +7,7 @@ import networkx as nx
 import networkx.algorithms.community as nx_comm
 import numpy as np
 import config_paths as paths
-
+EXPERIMENTOS = 10
 def getA2TR(G):
 	N = nx.number_of_nodes(G)
 	components = nx.connected_components(G)
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 			DIAMETERs=[]
 			RELATIVE_ORDERs=[]
 			MODULARITYs=[]
-			for contador,direc in enumerate(directorios):
+			for contador in range(EXPERIMENTOS):
 				archivo=open(nombre_directorio+"/"+str(contador+1)+"/degradationData.txt","r")
 				lineas=archivo.readlines()
 				archivo.close()
@@ -66,6 +66,7 @@ if __name__ == "__main__":
 				contenido=os.listdir(nombre_directorio+"/"+str(contador+1)+"/")
 				for k in contenido:
 					if ".adjlist" in k:
+						print(nombre_directorio+"/"+str(contador+1)+"/"+k,)
 						G=nx.read_adjlist(nombre_directorio+"/"+str(contador+1)+"/"+k,comments='#',nodetype=int)
 						orden=G.order()#orden del grafo
 						MODULARIDAD1=nx_comm.modularity(G, nx_comm.louvain_communities(G))

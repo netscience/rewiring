@@ -19,7 +19,7 @@ do
            archivo=graph_test_$c.adjlist
            if [ -f $archivo ]
            then
-                python3 $FILE_DEGRADATION $archivo $HOME$RESULTADOS_DIR/Degradación/$DEGRADACION/GrafosFinales/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING/$x/
+                $HOME$CONDA_DIR/python3 $FILE_DEGRADATION $archivo $HOME$RESULTADOS_DIR/Degradación/$DEGRADACION/GrafosFinales/$i/ExperimentosCooperadores/R$REGLA/$RED/$ROUTING/$x/
                 break
            else
                 echo "$archivo NO existe"

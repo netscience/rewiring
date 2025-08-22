@@ -5,7 +5,7 @@ import shutil
 import config_paths as paths
 
 #print(list(os.walk(ejemplo_dir)))
-print(paths.RESULTADOS_DIR)
+
 for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	if len(subdirectorios)==0:
 		shutil.copy2("config.py", nombre_directorio+"/")

@@ -11,7 +11,7 @@ def create_datafile():
 
 def create_histogramsfile():
     with open (ruta+'degreeHistograms.txt','w') as histograms:
-        histograms.write('{}'.format("# n  list(x)  list(y)\n"))
+        histograms.write('{}'.format("# n  list(degree)  list(count)\n"))
 
 
 def save_degree_histogram(D):
@@ -40,6 +40,7 @@ def graph_properties(G):
     largest_cc = max(nx.connected_components(G), key=len)  # Componente más grande
     L = G.subgraph(largest_cc)                             # Grafo que descibe al componente más grande
     order_L = L.order()                                    # Numero de nodos en el componente más grande
+    save_degree_histogram(G)
     if n_components > 1:       # Si hay más de un componente calculas las propiedades para el más grande
         aspl = nx.average_shortest_path_length(L)          # Longitud de trayectoria más corta promedio
         diameter = nx.diameter(L)                          # Diametro 
@@ -50,7 +51,7 @@ def graph_properties(G):
                 assortativity = nx.degree_pearson_correlation_coefficient(L)    # Coeficiente de asortatividad
             except RuntimeWarning:
                 assortativity = 'na'
-            save_degree_histogram(L)
+            #save_degree_histogram(L)
         else:
             assortativity = 'na'
         
@@ -64,7 +65,7 @@ def graph_properties(G):
                 assortativity = nx.degree_pearson_correlation_coefficient(G)
             except RuntimeWarning:
                 assortativity = 'na'            
-            save_degree_histogram(G)
+            #save_degree_histogram(G)
         else:
             assortativity = 'na'
     if assortativity!='na':   

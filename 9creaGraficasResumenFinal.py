@@ -1,4 +1,5 @@
 import config_paths as paths
+import config_Graficas as config_graficas
 
 #crea un resumen de las medidas promedio obtenidas previamente de la parte de formacion y degradacion de redes complejas
 
@@ -6,16 +7,16 @@ import config_paths as paths
 #experimentos cooperadores:
 ejemplo_dir2 = paths.DEGRADACION_DIR + '/Ataques/GrafosFinales'
 ejemplo_dir3 = paths.DEGRADACION_DIR + '/Fallas/GrafosFinales'
-tamEnlace=["D","D2","D4","D8","D16"]
-reglas=["R1","R2","R3"]
-topologias=["anillo1500","malla50x50"]
-algEncam=["CR","RW","SP"]
+tamEnlace=config_graficas.TAM_ENLACES
+reglas=config_graficas.REGLAS
+topologias=config_graficas.TOPOLOGIAS
+algEncam=config_graficas.ALG_ENCAMINAMIENTO
 medidas=["CAP","LTP","DIAM","GRADO_MAX","ATTR"]
 for p in topologias:
 	for i in algEncam:
 		archivo=open("Coop-"+p+"-"+i+".csv","w")
 		for contador,j in enumerate(medidas):
-			archivo.write("\n"+j+",R1,R2,R3\n")
+			archivo.write("\n"+j+config_graficas.COLS_REGLAS+"\n")
 			if contador<3:
 				for k in tamEnlace:
 					escribir=[k]
@@ -23,10 +24,15 @@ for p in topologias:
 						arch=open(paths.RESULTADOS_DIR+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 						lineas=arch.readlines()
 						arch.close()
-						CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
+						ciclo,CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
 						lineaLista=[CAP,LTP,DIAM]
 						escribir.append(lineaLista[contador])
-					archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
+					if len(reglas) == 1:
+						archivo.write(escribir[0]+","+escribir[1]+"\n")
+					elif len(reglas) == 2:
+						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+"\n")
+					else:
+						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
 			else:
 				if contador==3:
 					for k in tamEnlace:
@@ -36,7 +42,12 @@ for p in topologias:
 							lineas=arch.readlines()
 							arch.close()
 							escribir.append(str(len(lineas)-1))
-						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
+						if len(reglas) == 1:
+							archivo.write(escribir[0]+","+escribir[1]+"\n")
+						elif len(reglas) == 2:
+							archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+"\n")
+						else:
+							archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
 				else:
 					for k in tamEnlace:
 						escribir=[k]
@@ -44,11 +55,12 @@ for p in topologias:
 							arch=open(ejemplo_dir2+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
-							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
-							lineaLista=[CAP,LTP,DIAM,ORCG,ATTR]
+							print(ejemplo_dir2+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv")
+							CAP,LTP,DIAM,ORCG,ASSORT=lineas[-1].replace("\n","").split(",")
+							lineaLista=[CAP,LTP,DIAM,ORCG]
 							escribir.append(lineaLista[contador])
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
-					archivo.write("\n"+"LTP"+",R1,R2,R3\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_REGLAS+"\n")
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
@@ -58,7 +70,7 @@ for p in topologias:
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
 							escribir.append(LTP)
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
-					archivo.write("\n"+j+",R1,R2,R3\n")
+					archivo.write("\n"+j+","+config_graficas.COLS_REGLAS+"\n")
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
@@ -69,7 +81,7 @@ for p in topologias:
 							lineaLista=[CAP,LTP,DIAM,ORCG,ATTR]
 							escribir.append(lineaLista[contador])
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
-					archivo.write("\n"+"LTP"+",R1,R2,R3\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_REGLAS+"\n")
 					for k in tamEnlace:
 						escribir=[k]
 						for l in reglas:
@@ -81,16 +93,16 @@ for p in topologias:
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
 		archivo.close()
 #experimentos semi-cooperadores:
-tamEnlace=["D","D2","D4","D8"]
-reglas=["R1","R2","R3"]
-topologias=["anillo1500","malla50x50"]
-limitaciones=["n4","n16","n64"]
+tamEnlace=config_graficas.TAM_ENLACES_SC
+reglas=config_graficas.REGLAS_SC
+topologias=config_graficas.TOPOLOGIAS_SC
+limitaciones=config_graficas.CONEXIONES_SC
 medidas=["CAP","LTP","DIAM","GRADO_MAX","ATTR"]
 for p in topologias:
 	for i in limitaciones:
 		archivo=open("SemiCoop-"+p+"-"+i+".csv","w")
 		for contador,j in enumerate(medidas):
-			archivo.write("\n"+j+",R1,R2,R3\n")
+			archivo.write("\n"+j+","+config_graficas.COLS_REGLAS+"\n")
 			if contador<3:
 				for k in tamEnlace:
 					escribir=[k+","]
@@ -99,7 +111,7 @@ for p in topologias:
 							arch=open(paths.RESULTADOS_DIR+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
-							CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
+							CAP,LTP,DIAM,a,b=lineas[len(lineas)-1].replace("\n","").split(",")
 							lineaLista=[CAP,LTP,DIAM]
 							escribir.append(lineaLista[contador]+",")
 						except FileNotFoundError as error:
@@ -144,7 +156,7 @@ for p in topologias:
 								archivo.write(escribir[contador2])
 							else:
 								archivo.write(escribir[contador2]+"\n")
-					archivo.write("\n"+"LTP"+",R1,R2,R3\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_REGLAS+"\n")
 					for k in tamEnlace:
 						escribir=[k+","]
 						for l in reglas:
@@ -161,7 +173,7 @@ for p in topologias:
 								archivo.write(escribir[contador2])
 							else:
 								archivo.write(escribir[contador2]+"\n")
-					archivo.write("\n"+j+",R1,R2,R3\n")
+					archivo.write("\n"+j+","+config_graficas.COLS_REGLAS+"\n")
 					for k in tamEnlace:
 						escribir=[k+","]
 						for l in reglas:
@@ -179,7 +191,7 @@ for p in topologias:
 								archivo.write(escribir[contador2])
 							else:
 								archivo.write(escribir[contador2]+"\n")
-					archivo.write("\n"+"LTP"+",R1,R2,R3\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_REGLAS+"\n")
 					for k in tamEnlace:
 						escribir=[k+","]
 						for l in reglas:
@@ -200,16 +212,16 @@ for p in topologias:
 
 #tamaños de enlaces vs algoritmos de encaminamiento
 #experimentos cooperadores:
-tamEnlace=["D","D2","D4","D8","D16"]
-reglas=["R1","R2","R3"]
-topologias=["anillo1500","malla50x50"]
-algEncam=["CR","RW","SP"]
+tamEnlace=config_graficas.TAM_ENLACES
+reglas=config_graficas.REGLAS
+topologias=config_graficas.TOPOLOGIAS
+algEncam=config_graficas.ALG_ENCAMINAMIENTO
 medidas=["CAP","LTP","DIAM","GRADO_MAX","ATTR"]
 for p in topologias:
 	for l in reglas:
 		archivo=open("Coop_2-"+p+"-"+l+".csv","w")
 		for contador,j in enumerate(medidas):
-			archivo.write("\n"+j+",CR,RW,SP\n")
+			archivo.write("\n"+j+","+config_graficas.COLS_ROUTING+"\n")
 			if contador<3:
 				for k in tamEnlace:
 					escribir=[k]
@@ -217,7 +229,7 @@ for p in topologias:
 						arch=open(paths.RESULTADOS_DIR+"/"+k+"/ExperimentosCooperadores/"+l+"/"+p+"/"+i+"/datos-promedio.csv","r")
 						lineas=arch.readlines()
 						arch.close()
-						CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
+						CAP,LTP,DIAM,a,b=lineas[len(lineas)-1].replace("\n","").split(",")
 						lineaLista=[CAP,LTP,DIAM]
 						escribir.append(lineaLista[contador])
 					archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
@@ -242,7 +254,7 @@ for p in topologias:
 							lineaLista=[CAP,LTP,DIAM,ORCG,ATTR]
 							escribir.append(lineaLista[contador])
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
-					archivo.write("\n"+"LTP"+",CR,RW,SP\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_ROUTING+"\n")
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
@@ -252,7 +264,7 @@ for p in topologias:
 							CAP,LTP,DIAM,ORCG,ATTR,ASSORT=lineas[29].replace("\n","").split(",")
 							escribir.append(LTP)
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
-					archivo.write("\n"+j+",CR,RW,SP\n")
+					archivo.write("\n"+j+","+config_graficas.COLS_ROUTING+"\n")
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
@@ -263,7 +275,7 @@ for p in topologias:
 							lineaLista=[CAP,LTP,DIAM,ORCG,ATTR]
 							escribir.append(lineaLista[contador])
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
-					archivo.write("\n"+"LTP"+",CR,RW,SP\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_ROUTING+"\n")
 					for k in tamEnlace:
 						escribir=[k]
 						for i in algEncam:
@@ -275,16 +287,16 @@ for p in topologias:
 						archivo.write(escribir[0]+","+escribir[1]+","+escribir[2]+","+escribir[3]+"\n")
 		archivo.close()
 #experimentos semi-cooperadores:
-tamEnlace=["D","D2","D4","D8"]
-reglas=["R1","R2","R3"]
-topologias=["anillo1500","malla50x50"]
-limitaciones=["n4","n16","n64"]
+tamEnlace=config_graficas.TAM_ENLACES_SC
+reglas=config_graficas.REGLAS_SC
+topologias=config_graficas.TOPOLOGIAS_SC
+limitaciones=config_graficas
 medidas=["CAP","LTP","DIAM","GRADO_MAX","ATTR"]
 for p in topologias:
 	for l in reglas:
 		archivo=open("SemiCoop2-"+p+"-"+l+".csv","w")
 		for contador,j in enumerate(medidas):
-			archivo.write("\n"+j+",n4,n16,n64\n")
+			archivo.write("\n"+j+","+config_graficas.COLS_CONEXIONES+"\n")
 			if contador<3:
 				for k in tamEnlace:
 					escribir=[k+","]
@@ -293,7 +305,7 @@ for p in topologias:
 							arch=open(paths.RESULTADOS_DIR+"/"+k+"/ExperimentosSemi-Cooperadores/"+l+"/"+p+"/SP/"+i+"/datos-promedio.csv","r")
 							lineas=arch.readlines()
 							arch.close()
-							CAP,LTP,DIAM,a,b,c=lineas[len(lineas)-1].replace("\n","").split(",")
+							CAP,LTP,DIAM,a,b=lineas[len(lineas)-1].replace("\n","").split(",")
 							lineaLista=[CAP,LTP,DIAM]
 							escribir.append(lineaLista[contador]+",")
 						except FileNotFoundError as error:
@@ -338,7 +350,7 @@ for p in topologias:
 								archivo.write(escribir[contador2])
 							else:
 								archivo.write(escribir[contador2]+"\n")
-					archivo.write("\n"+"LTP"+",n4,n16,n64\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_CONEXIONES+"\n")
 					for k in tamEnlace:
 						escribir=[k+","]
 						for i in limitaciones:
@@ -355,7 +367,7 @@ for p in topologias:
 								archivo.write(escribir[contador2])
 							else:
 								archivo.write(escribir[contador2]+"\n")
-					archivo.write("\n"+j+",n4,n16,n64\n")
+					archivo.write("\n"+j+","+config_graficas.COLS_CONEXIONES+"\n")
 					for k in tamEnlace:
 						escribir=[k+","]
 						for i in limitaciones:
@@ -373,7 +385,7 @@ for p in topologias:
 								archivo.write(escribir[contador2])
 							else:
 								archivo.write(escribir[contador2]+"\n")
-					archivo.write("\n"+"LTP"+",n4,n16,n64\n")
+					archivo.write("\n"+"LTP"+","+config_graficas.COLS_CONEXIONES+"\n")
 					for k in tamEnlace:
 						escribir=[k+","]
 						for i in limitaciones:

@@ -1,19 +1,16 @@
 import config_paths as paths
 import config
+import config_Graficas as config_graficas
 
 #PARA AGENTES COOPERADORES:
-tamEnlaces=["D","D2","D4"]
-reglas=["R1"]
-topologias=["malla8x8"]
-algEncaminamiento=["CR"]
-for i in reglas:
-	for j in topologias:
-		for k in algEncaminamiento:
+for i in config_graficas.REGLAS:
+	for j in config_graficas.TOPOLOGIAS:
+		for k in config_graficas.ALG_ENCAMINAMIENTO:
 			LIST_CAPGEN=[]
 			LIST_LTPGEN=[]
 			LIST_DIAMGEN=[]
 			LIST_GRAGEN=[]
-			for l in tamEnlaces:
+			for l in config_graficas.TAM_ENLACES:
 				primero=open(paths.RESULTADOS_DIR+"/"+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio.csv","r")
 				lineasPrimero = primero.readlines()
 				primero.close()
@@ -42,19 +39,19 @@ for i in reglas:
 				LIST_GRAGEN.append(LIST_GRAD)
 			#escribo el archivo csv final de cada experimento de base
 			datosPromedio=open(paths.RESULTADOS_DIR+"/Gráficas_Formación/Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
-			datosPromedio.write(",Coeficiente de Agrupamiento\n,D,D2,D4\n")
+			datosPromedio.write(",Coeficiente de Agrupamiento\n,"+config_graficas.COLS_ENLACE+"\n")
 			for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 				datosPromedio.write(str(contador)+",")
 				for sublista in LIST_CAPGEN:
 					datosPromedio.write(sublista[in1]+",")
 				datosPromedio.write("\n")
-			datosPromedio.write("\n\n,Longitud de Trayectoria Promedio\n,D,D2,D4\n")
+			datosPromedio.write("\n\n,Longitud de Trayectoria Promedio\n,"+config_graficas.COLS_ENLACE+"\n")
 			for contador,in1 in enumerate(range(len(LIST_LTPGEN[0]))):
 				datosPromedio.write(str(contador)+",")
 				for sublista in LIST_LTPGEN:
 					datosPromedio.write(sublista[in1]+",")
 				datosPromedio.write("\n")
-			datosPromedio.write("\n\n,Diámetro\n,D,D2,D4\n")
+			datosPromedio.write("\n\n,Diámetro\n,"+config_graficas.COLS_ENLACE+"\n")
 			for contador,in1 in enumerate(range(len(LIST_DIAMGEN[0]))):
 				datosPromedio.write(str(contador)+",")
 				for sublista in LIST_DIAMGEN:
@@ -68,7 +65,7 @@ for i in reglas:
 				nodos=config.NODOS_ANILLO
 			else:
 				nodos=config.ROWS*config.COLUMNS
-			datosPromedio.write("\n\n,Distribución de Grados\n,D,D2,D4\n")
+			datosPromedio.write("\n\n,Distribución de Grados\n,"+config_graficas.COLS_ENLACE+"\n")
 			for in1 in range(maximo):
 				datosPromedio.write(str(in1)+",")
 				for sublista in LIST_GRAGEN:
@@ -80,18 +77,14 @@ for i in reglas:
 			datosPromedio.close()
 
 #PARA AGENTES SEMI-COOPERADORES:
-tamEnlaces=["D","D2","D4","D8","D16"]
-reglas=[]#["R1","R2","R3"]
-topologias=["anillo1500","malla50x50"]
-conexionesMaximas=["n4","n16","n64"]
-for i in reglas:
-	for j in topologias:
-		for k in conexionesMaximas:
+for i in config_graficas.REGLAS_SC:
+	for j in config_graficas.TOPOLOGIAS_SC:
+		for k in config_graficas.CONEXIONES_SC:
 			LIST_CAPGEN=[]
 			LIST_LTPGEN=[]
 			LIST_DIAMGEN=[]
 			LIST_GRAGEN=[]
-			for l in tamEnlaces:
+			for l in config_graficas.TAM_ENLACES_SC:
 				try:
 					primero=open(paths.RESULTADOS_DIR+"/"+l+"/ExperimentosSemi-Cooperadores/"+i+"/"+j+"/SP/"+k+"/datos-promedio.csv","r")
 					lineasPrimero = primero.readlines()
@@ -121,19 +114,19 @@ for i in reglas:
 					pass
 			#escribo el archivo csv final de cada experimento de semi-cooperadores
 			datosPromedio=open(paths.RESULTADOS_DIR+"/Gráficas_Formación/Semi-Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
-			datosPromedio.write(",Coeficiente de Agrupamiento\n,D,D2,D4,D8,D16\n")
+			datosPromedio.write(",Coeficiente de Agrupamiento\n,"+config_graficas.COLS_ENLACE+"\n")
 			for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 				datosPromedio.write(str(contador)+",")
 				for sublista in LIST_CAPGEN:
 					datosPromedio.write(sublista[in1]+",")
 				datosPromedio.write("\n")
-			datosPromedio.write("\n\n,Longitud de Trayectoria Promedio\n,D,D2,D4,D8,D16\n")
+			datosPromedio.write("\n\n,Longitud de Trayectoria Promedio\n,"+config_graficas.COLS_ENLACE+"\n")
 			for contador,in1 in enumerate(range(len(LIST_LTPGEN[0]))):
 				datosPromedio.write(str(contador)+",")
 				for sublista in LIST_LTPGEN:
 					datosPromedio.write(sublista[in1]+",")
 				datosPromedio.write("\n")
-			datosPromedio.write("\n\n,Diámetro\n,D,D2,D4,D8,D16\n")
+			datosPromedio.write("\n\n,Diámetro\n,"+config_graficas.COLS_ENLACE+"\n")
 			for contador,in1 in enumerate(range(len(LIST_DIAMGEN[0]))):
 				datosPromedio.write(str(contador)+",")
 				for sublista in LIST_DIAMGEN:
@@ -147,7 +140,7 @@ for i in reglas:
 				nodos=config.NODOS_ANILLO
 			else:
 				nodos=config.ROWS*config.COLUMNS
-			datosPromedio.write("\n\n,Distribución de Grados\n,D,D2,D4,D8,D16\n")
+			datosPromedio.write("\n\n,Distribución de Grados\n,"+config_graficas.COLS_ENLACE+"\n")
 			for in1 in range(maximo):
 				datosPromedio.write(str(in1)+",")
 				for sublista in LIST_GRAGEN:
