@@ -24,8 +24,8 @@ class Main:#hereda de la clase object, hay que recordar que en Python todo es un
 		self.__diagonal=self.diag()      # Longitud de la diagonal principal de la malla
 		#--------------------------------
 		self.__ciclos=config.CICLOS      # Número de ciclos de simulación
-		self.__tamEnlace=self.__diagonal # Longitud máxima del enlace dinámico, se puede ajustar con self.__diagonal para la malla y self.__diametro para el anillo
-		self.__grafo=-1                  # Topología sobre la que se desarrollará la simulación
+		#self.__tamEnlace=self.__diagonal # Longitud máxima del enlace dinámico, se puede ajustar con self.__diagonal para la malla y self.__diametro para el anillo
+		self.__grafo=config.RED          # Topología sobre la que se desarrollará la simulación
 		self.__graph = None              # Grafo NetworkX sobre el que se desarrollará la simulación
 		self.__coordinador=1             # Identificador del nodo coordinador de la simulación
 		self.__nodosTotales=-1           # Número de nodos total del grafo
@@ -105,7 +105,6 @@ if __name__ == "__main__":
 	#Se selecciona el grafo con el que se trabajará en la simulación
 	#1.- Malla
 	#3.- Anillo
-	main.grafo=1
 	if(main.grafo==1):
 		main.createGrid()
 		main.nodosTotales=main.rows*main.columns
