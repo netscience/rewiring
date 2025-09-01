@@ -1,12 +1,9 @@
-
 import os
 import networkx as nx
-import sys
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
-import config_paths as paths
-import config
+import experimentos
 
 #este archivo crea todos los archivos de las imagenes png
 def creaHistogramaDistGrados(nombre,nodos,ruta,file):
@@ -51,7 +48,7 @@ def draw_graph_grid(graphFile,nodes,ruta,file):
 	ax = plt.subplot()
 	ax.axis('off')
 	color = [float(G.degree(v)) for v in G]
-	size = [(float(G.degree(v)))*config.NODE_SCALE for v in G.nodes()]
+	size = [(float(G.degree(v)))*experimentos.NODE_SCALE for v in G.nodes()]
 	#Graficamos nodos y aristas ,with_labels=False
 	nodes = nx.draw_networkx_nodes(G,posicion,node_color=color,alpha=0.9,node_size=size,cmap='rainbow',linewidths=0.3,ax=ax)
 	nx.draw_networkx_edges(G,posicion,alpha=0.4,width=0.4,edge_color='#585d5f')
@@ -90,7 +87,7 @@ def draw_graph_ring(graphFile,nodes,ruta,file):
 	ax = plt.subplot()
 	ax.axis('off')
 	color = [float(G.degree(v)) for v in G]
-	size = [float(G.degree(v))*config.NODE_SCALE for v in G.nodes()]
+	size = [float(G.degree(v))*experimentos.NODE_SCALE for v in G.nodes()]
 	#Graficamos nodos y aristas ,with_labels=False
 	nodes = nx.draw_networkx_nodes(G,posicion,node_color=color,alpha=0.9,node_size=size,cmap='rainbow',linewidths=0.3,ax=ax)
 	nx.draw_networkx_edges(G,posicion,alpha=0.4,width=0.4,edge_color='#585d5f')
@@ -109,7 +106,7 @@ def draw_graph_ring(graphFile,nodes,ruta,file):
 	plt.savefig(ruta+"/img_"+file+".png", dpi=50)
 
 #print(list(os.walk(ejemplo_dir)))
-for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
+for nombre_directorio, subdirectorios, ficheros in os.walk(experimentos.RESULTADOS_DIR):#recorro recursivamente un directorio
 	ultima=nombre_directorio[len(nombre_directorio)-1]
 	penultima=nombre_directorio[len(nombre_directorio)-2]
 	ciclo1=""
@@ -122,13 +119,13 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR)
 		primero.close()
 		ciclo1,AVCL,components,diam,APL,order = lineasPrimero[len(lineasPrimero)-1].split("\t")
 		if "malla" in nombre_directorio:
-			draw_graph_grid(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",config.COLUMNS,nombre_directorio,"graph_test_"+ciclo1)
+			draw_graph_grid(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",experimentos.COLUMNS,nombre_directorio,"graph_test_"+ciclo1)
 			plt.close()
-			nodos_malla = config.COLUMNS*config.ROWS
+			nodos_malla = experimentos.COLUMNS*experimentos.ROWS
 			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",nodos_malla,nombre_directorio,"hist_test_"+ciclo1)
 			plt.close()
 		else:
-			draw_graph_ring(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",config.NODOS_ANILLO,nombre_directorio,"graph_test_"+ciclo1)
+			draw_graph_ring(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",experimentos.NODOS_ANILLO,nombre_directorio,"graph_test_"+ciclo1)
 			plt.close()
-			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",config.NODOS_ANILLO,nombre_directorio,"hist_test_"+ciclo1)
+			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",experimentos.NODOS_ANILLO,nombre_directorio,"hist_test_"+ciclo1)
 			plt.close()

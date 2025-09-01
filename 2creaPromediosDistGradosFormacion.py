@@ -1,8 +1,8 @@
 
 import os
-import config_paths as paths
+import experimentos
 
-for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
+for nombre_directorio, directorios, ficheros in os.walk(experimentos.RESULTADOS_DIR):#recorro recursivamente un directorio
 	CANTIDADES=[]
 	if ("1" in directorios and "2" in directorios and "3" in directorios):
 		if '__pycache__' in directorios:

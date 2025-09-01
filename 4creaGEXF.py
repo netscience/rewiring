@@ -1,8 +1,7 @@
 
 import os
 import networkx as nx
-import config_paths as paths
-import config
+import experimentos
 import math
 
 
@@ -22,20 +21,20 @@ def getCoordinates(nodeId,nodos,contador):
 		coord = [x,contador]
 		return coord
 
-for nombre_directorio, subdirectorios, ficheros in os.walk(paths.RESULTADOS_DIR	):#recorro recursivamente un directorio
+for nombre_directorio, subdirectorios, ficheros in os.walk(experimentos.RESULTADOS_DIR	):#recorro recursivamente un directorio
 	#Obtiene las coordenas
 	coordenadas=[]
 	if "malla" in nombre_directorio:
-		nodes = config.COLUMNS*config.ROWS
-		contador=config.COLUMNS-1
+		nodes = experimentos.COLUMNS*experimentos.ROWS
+		contador=experimentos.COLUMNS-1
 		identificador=1
-		for i in range(1,config.COLUMNS+1):
-			for j in range(1,config.ROWS+1):
-				coordenadas.append(getCoordinates(identificador,config.COLUMNS,contador))
+		for i in range(1,experimentos.COLUMNS+1):
+			for j in range(1,experimentos.ROWS+1):
+				coordenadas.append(getCoordinates(identificador,experimentos.COLUMNS,contador))
 				identificador+=1
 			contador-=1
 	else:
-		nodes = config.NODOS_ANILLO
+		nodes = experimentos.NODOS_ANILLO
 		for i in range(1,nodes+1):
 			coordenadas.append(getCoordinatesAnillo(i,nodes))
 	

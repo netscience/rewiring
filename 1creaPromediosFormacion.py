@@ -1,10 +1,9 @@
 
 import os
 import numpy as np
-import config_paths as paths
-import config
+import experimentos
 
-for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
+for nombre_directorio, directorios, ficheros in os.walk(experimentos.RESULTADOS_DIR):#recorro recursivamente un directorio
 	AVCLUSTs=[]
 	APLs=[]
 	DIAMETERs=[]
@@ -41,9 +40,9 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 						APL_1.append(float(APL))
 						DIAMETER_1.append(float(diam))	
 			#verifico que se hayan terminado todos los ciclos en el archivo:
-			if len(AVCLUST_1)<config.CICLOS+1:
+			if len(AVCLUST_1)<experimentos.CICLOS+1:
 				#si no se ejecutaron todos los ciclos repito los datos del ultimo ciclo ejecutado hasta completar los 50 ciclos:
-				faltantes=config.CICLOS+1-len(AVCLUST_1)
+				faltantes=experimentos.CICLOS+1-len(AVCLUST_1)
 				AVCLUST_1_FINAL=AVCLUST_1[len(AVCLUST_1)-1]
 				APL_1_FINAL=APL_1[len(APL_1)-1]
 				DIAMETER_1_FINAL=DIAMETER_1[len(DIAMETER_1)-1]
@@ -61,7 +60,7 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 		STDAVCL=[]
 		STDAPL=[]
 		STDDIAM=[]
-		for i in range(config.CICLOS+1):
+		for i in range(experimentos.CICLOS+1):
 			AVGAVCL=0
 			AVGAPL=0
 			AVGDIAM=0
@@ -86,7 +85,7 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 			STDDIAM.append(np.std(stdDIAM))
 		datosPromedio=open(nombre_directorio+"/datos-promedio.csv","w")
 		datosPromedio.write("ciclo,avCl,aslp,dia,std_avCL,std_aspl,std_dia\n")
-		for i in range(config.CICLOS+1):
+		for i in range(experimentos.CICLOS+1):
 			datosPromedio.write(str(i)+',')
 			datosPromedio.write('{0:.3f},'.format(AVCL_AVERAGE[i]))
 			datosPromedio.write('{0:.3f},'.format(APL_AVERAGE[i]))

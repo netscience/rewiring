@@ -53,9 +53,12 @@ def ejecutar_degradacion():
 
                                 # Copiar grafo y scripts a carpeta destino
                                 archivo_grafo_destino = carpeta_destino / archivo_grafo_origen.name
-                                shutil.copy(archivo_grafo_origen, archivo_grafo_destino)
+                                if not archivo_grafo_destino.exists():                    
+                                    shutil.copy(archivo_grafo_origen, archivo_grafo_destino)
                                 #shutil.copy("config.py", carpeta_destino / "config.py")
-                                shutil.copy(experimentos.FILE_DEGRADATION, carpeta_destino / experimentos.FILE_DEGRADATION)
+                                degradation_script =carpeta_destino / experimentos.FILE_DEGRADATION
+                                if not degradation_script.exists():
+                                    shutil.copy(experimentos.FILE_DEGRADATION, carpeta_destino / experimentos.FILE_DEGRADATION)
 
                                 # Ejecutar degradación desde carpeta destino
                                 subprocess.run([
@@ -69,5 +72,6 @@ def ejecutar_degradacion():
                                 print(f"  No existe: {archivo_grafo_origen.name}")
 
 if __name__ == "__main__":
+
     ejecutar_degradacion()
 
