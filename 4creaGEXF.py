@@ -46,10 +46,10 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(experimentos.RESULTAD
 	ultima=nombre_directorio[len(nombre_directorio)-1]
 	penultima=nombre_directorio[len(nombre_directorio)-2]
 	ciclo1=""
-	lista=["/1","/2","/3","/4","/5","/6","/7","/8","/9","10"]
+	lista=["/"+str(i) for i in range(1,experimentos.EJECUCIONES+1)]
 	if(penultima+ultima in lista):
-		if penultima+ultima=="10":
-			ultima="10"
+		if penultima+ultima==str("/"+str(experimentos.EJECUCIONES)):
+			ultima=str(experimentos.EJECUCIONES)
 		primero=open(nombre_directorio+"/datos-salida_"+ultima+".txt","r")
 		lineasPrimero = primero.readlines()
 		primero.close()

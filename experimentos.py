@@ -1,8 +1,8 @@
 #Configuración de una serie de experimentos de formación y degradación
 from pathlib import Path
 
+#--------- Directorios para guardar resultados -----------
 home_path = Path.home()
-
 BASE_DIR = str(home_path) + "/Documents/Repositorios/ResultadosCN/"
 
 RESULTADOS_DIR = BASE_DIR + "Formación"
@@ -26,7 +26,11 @@ ENLACES_DINAMICOS=2         # Número de enlaces dinámicos por nodo
 EXPLORADORES=20             # Número de paquetes exploradores por ciclo
 DIV_CONEXIONES=1            # Divisor (con respecto al número de nodos, num_nodos/DIV_CONEXIONES) del máximo número de conexiones permitidas
 #--------VISUALIZACION-----------
-#Parameteros para 3creaImagenesPNG.py
-NODE_SCALE = 10     #Usar 1 para orden de anillo=1500 y orde de malla=2500
+#Parametros para 3creaImagenesPNG.py
+# Se recomiendan los siguientes valores:
+# 1 para orden de anillo=1500 y orden de malla=2500
+# 20 para orden de anillo=50 y orden de malla=64
+NODE_SCALE = 20             
 #-------DEGRADACION------------
+TIPO_DEGRADACION=["Fallas","Ataques"]  # Tipo de degradación: "Fallas", "Ataques"
 SAVE_STEP=4                 #Cada cuántos ataques registra medidas

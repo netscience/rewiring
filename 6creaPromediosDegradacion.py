@@ -6,8 +6,8 @@ import os
 import networkx as nx
 import networkx.algorithms.community as nx_comm
 import numpy as np
-import config_paths as paths
-EXPERIMENTOS = 10
+import experimentos
+
 def getA2TR(G):
 	N = nx.number_of_nodes(G)
 	components = nx.connected_components(G)
@@ -27,7 +27,7 @@ def loadSequence(sFile):
 	return sequence
 
 if __name__ == "__main__":
-	ejemplo_dir = paths.DEGRADACION_DIR #este es el directorio que recorrere recursivamente
+	ejemplo_dir = experimentos.DEGRADACION_DIR #este es el directorio que recorrere recursivamente
 	for nombre_directorio, directorios, ficheros in os.walk(ejemplo_dir):#recorro recursivamente un directorio
 		if ("1" in directorios and "2" in directorios and "3" in directorios):
 			print(nombre_directorio)
@@ -39,7 +39,7 @@ if __name__ == "__main__":
 			DIAMETERs=[]
 			RELATIVE_ORDERs=[]
 			MODULARITYs=[]
-			for contador in range(EXPERIMENTOS):
+			for contador in range(experimentos.EJECUCIONES):#recorro las carpetas 1,2,3...
 				archivo=open(nombre_directorio+"/"+str(contador+1)+"/degradationData.txt","r")
 				lineas=archivo.readlines()
 				archivo.close()
