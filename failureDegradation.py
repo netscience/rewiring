@@ -3,7 +3,7 @@ import sys
 import networkx as nx
 import random
 import collections
-import experimentos
+import configDegradacion
 
 def create_datafile():
     """Crea el archivo donde se almacenarán los datos de la degradación"""
@@ -89,7 +89,7 @@ def failure_degradation():
         G.remove_node(random_node)
         deleted_nodes.append(random_node)
         cont += 1
-        if ((cont == experimentos.SAVE_STEP) or (G.order()==1)):
+        if ((cont == configDegradacion.SAVE_STEP) or (G.order()==1)):
             graph_properties(G)
             cont = 0
     with open (ruta+'FailureSequence.txt','w') as seq:

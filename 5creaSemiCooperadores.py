@@ -1,15 +1,15 @@
 
 import os
-import config_paths as paths
-import config
+import configFormacion
+import configPaths
 
-nodos_malla = config.COLUMNS*config.ROWS
-anillo=[config.NODOS_ANILLO/4,config.NODOS_ANILLO/8,config.NODOS_ANILLO/16]
+nodos_malla = configFormacion.COLUMNS*configFormacion.ROWS
+anillo=[configFormacion.NODOS_ANILLO/4,configFormacion.NODOS_ANILLO/8,configFormacion.NODOS_ANILLO/16]
 malla=[nodos_malla/4,nodos_malla/8,nodos_malla/16]
 datosPromedio=open("semi-cooperadores.csv","w")
 datosPromedio.write("Experimento,gradoMax,n/4,n/8,n/16\n")
 datosPromedio.close()
-for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#recorro recursivamente un directorio
+for nombre_directorio, directorios, ficheros in os.walk(configPaths.RESULTADOS_DIR):#recorro recursivamente un directorio
 	GRADOS=[]
 	if '__pycache__' in directorios:
 		directorios.remove('__pycache__')
@@ -45,5 +45,5 @@ for nombre_directorio, directorios, ficheros in os.walk(paths.RESULTADOS_DIR):#r
 					resultados.append("SI")
 				else:
 					resultados.append("NO")
-		datosPromedio.write(nombre_directorio.replace(paths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
+		datosPromedio.write(nombre_directorio.replace(configPaths.RESULTADOS_DIR,"")+","+resultados[0]+","+resultados[1]+","+resultados[2]+","+resultados[3]+"\n")
 		datosPromedio.close()

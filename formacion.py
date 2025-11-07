@@ -2,7 +2,8 @@ import subprocess
 from pathlib import Path
 import os
 import shutil
-import experimentos
+import configFormacion
+import configPaths
 # Ruta base actual (asegúrate de estar en ResultadosCN1 al ejecutar)
 BASE_DIR = Path.cwd()
 PYTHON_EXEC = "python"  # Si tu entorno ya responde a 'python'
@@ -12,12 +13,12 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla,tipo_red, ruteo
     constantes = {
         #--------ANILLO------------------
         # Número de nodos del anillo. Colocar 0 si no se usa anillo
-        "NODOS_ANILLO":experimentos.NODOS_ANILLO, 
+        "NODOS_ANILLO":configFormacion.NODOS_ANILLO, 
         #--------MALLA-------------------
         # Filas de la malla. Colocar 0 si no se usa malla
-        "ROWS":experimentos.ROWS,
+        "ROWS":configFormacion.ROWS,
         # Columnas de la malla                  
-        "COLUMNS":experimentos.COLUMNS,           
+        "COLUMNS":configFormacion.COLUMNS,           
         #--------FORMACION-------------
         # Topología sobre la que se desarrollará la simulación: 1 -> "malla" o 3->"anillo"
         "RED":tipo_red,                           
@@ -28,14 +29,14 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla,tipo_red, ruteo
         "LONG_ENLACE":long_enlace,        
         #--------EJECUCION---------------
         # Número de ciclos de formación
-        "CICLOS":experimentos.CICLOS,                    
+        "CICLOS":configFormacion.CICLOS,                    
         #--------EXTRAS------------------
         # Número de enlaces dinámicos por nodo
-        "ENLACES_DINAMICOS":experimentos.ENLACES_DINAMICOS,       
+        "ENLACES_DINAMICOS":configFormacion.ENLACES_DINAMICOS,       
         # Número de experimentos a realizar
-        "EXPLORADORES":experimentos.EXPLORADORES,
+        "EXPLORADORES":configFormacion.EXPLORADORES,
         # Divisor (con respecto al número de nodos, num_nodos/DIV_CONEXIONES) del máximo número de conexiones permitidas
-        "DIV_CONEXIONES":experimentos.DIV_CONEXIONES         
+        "DIV_CONEXIONES":configFormacion.DIV_CONEXIONES         
     }
 
     with open(nombre_archivo, 'w') as f:
@@ -48,19 +49,19 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla,tipo_red, ruteo
     print(f"Archivo '{nombre_archivo}' generado con {len(constantes)} constantes.")
 
 
-for red in experimentos.RED:
+for red in configFormacion.RED:
     if red == "anillo":
-        nombre_red = "anillo" + str(experimentos.NODOS_ANILLO)
+        nombre_red = "anillo" + str(configFormacion.NODOS_ANILLO)
         tipo_red = 3
     elif red == "malla":
-        nombre_red = f"malla{experimentos.ROWS}x{experimentos.COLUMNS}"
+        nombre_red = f"malla{configFormacion.ROWS}x{configFormacion.COLUMNS}"
         tipo_red = 1    
     else:
         print(f" Tipo de red desconocido, saltando: {red}")
         continue   
-    for r in experimentos.REGLAS:
+    for r in configFormacion.REGLAS:
         routing = "x"
-        for ruteo in experimentos.ROUTING:
+        for ruteo in configFormacion.ROUTING:
             if ruteo == "COMPASS-ROUTING":
                 routing = "CR"
             elif ruteo == "RANDOM-WALK":
@@ -71,8 +72,8 @@ for red in experimentos.RED:
                 print(f" Algoritmo de ruteo desconocido, saltando: {ruteo}")
                 continue
 
-            for long_enlace in experimentos.LONG_ENLACES:
-                ruta = f"{experimentos.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
+            for long_enlace in configFormacion.LONG_ENLACES:
+                ruta = f"{configPaths.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
                 print(f"\n Explorando: {ruta}")
 
                 if not os.path.exists(ruta):
@@ -82,7 +83,7 @@ for red in experimentos.RED:
                 # Crea constantes.py en la ruta
                 generar_script_constantes(str(ruta)+"/config.py", long_enlace, r, tipo_red,ruteo)
 
-                for x in range(1, experimentos.EJECUCIONES + 1):
+                for x in range(1, configFormacion.EJECUCIONES + 1):
                     hoja = f"{ruta}/{x}"
                     os.makedirs(hoja, exist_ok=True)
 

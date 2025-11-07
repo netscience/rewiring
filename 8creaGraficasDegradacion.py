@@ -1,18 +1,20 @@
 import os
-import experimentos
+import configPaths
+import configDegradacion
+import configFormacion
 
-for tipo_degradacion in experimentos.TIPO_DEGRADACION:
-	os.makedirs(f"{experimentos.DEGRADACION_DIR}/Medidas_degradacion/Medidas_{tipo_degradacion}", exist_ok=True)
-	for r in experimentos.REGLAS:
-		for red in experimentos.RED:
+for tipo_degradacion in configDegradacion.TIPO_DEGRADACION:
+	os.makedirs(f"{configPaths.DEGRADACION_DIR}/Medidas_degradacion/Medidas_{tipo_degradacion}", exist_ok=True)
+	for r in configFormacion.REGLAS:
+		for red in configFormacion.RED:
 			if red == "anillo":
-				nombre_red = "anillo" + str(experimentos.NODOS_ANILLO)
+				nombre_red = "anillo" + str(configFormacion.NODOS_ANILLO)
 			elif red == "malla":
-				nombre_red = f"malla{experimentos.ROWS}x{experimentos.COLUMNS}"
+				nombre_red = f"malla{configFormacion.ROWS}x{configFormacion.COLUMNS}"
 			else:
 				print(f" Tipo de red desconocido, saltando: {red}")
 				continue
-			for ruteo in experimentos.ROUTING:
+			for ruteo in configFormacion.ROUTING:
 				routing = "x"
 				if ruteo == "COMPASS-ROUTING":
 					routing = "CR"
@@ -29,8 +31,8 @@ for tipo_degradacion in experimentos.TIPO_DEGRADACION:
 				LIST_ORCGGEN=[]
 				#LIST_ATTRGEN=[]
 				LIST_ASSORTGEN=[]
-				for long_enlace in experimentos.LONG_ENLACES:
-					dir_degradacion=experimentos.DEGRADACION_DIR+"/"+tipo_degradacion+"/"+nombre_red+"/R"+str(r)+"/"+routing+"/D"+str(long_enlace)+"/"
+				for long_enlace in configFormacion.LONG_ENLACES:
+					dir_degradacion=configPaths.DEGRADACION_DIR+"/"+tipo_degradacion+"/"+nombre_red+"/R"+str(r)+"/"+routing+"/D"+str(long_enlace)+"/"
 					primero=open(dir_degradacion+"datos-promedio.csv","r")
 					lineasPrimero = primero.readlines()
 					primero.close()
@@ -58,10 +60,10 @@ for tipo_degradacion in experimentos.TIPO_DEGRADACION:
 					LIST_ASSORTGEN.append(LIST_ASSORT)
 				#escribo el archivo csv final de cada experimento de base
 				cols_enlace=""
-				for long_enlace in experimentos.LONG_ENLACES:
+				for long_enlace in configFormacion.LONG_ENLACES:
 					cols_enlace=cols_enlace+"D"+str(long_enlace)+","
 			
-				datosPromedio=open(experimentos.DEGRADACION_DIR+"/Medidas_degradacion/Medidas_"+tipo_degradacion+"/Medidas_"+tipo_degradacion+"_"+nombre_red+"_R"+str(r)+"_"+routing+".csv","w")
+				datosPromedio=open(configPaths.DEGRADACION_DIR+"/Medidas_degradacion/Medidas_"+tipo_degradacion+"/Medidas_"+tipo_degradacion+"_"+nombre_red+"_R"+str(r)+"_"+routing+".csv","w")
 				datosPromedio.write(",Coeficiente de Agrupamiento\n,"+cols_enlace+"\n")
 				for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
 					datosPromedio.write(str(contador)+",")

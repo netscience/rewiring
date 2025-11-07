@@ -1,7 +1,8 @@
 
 import os
 import networkx as nx
-import experimentos
+import configFormacion
+import configPaths
 import math
 
 
@@ -21,20 +22,20 @@ def getCoordinates(nodeId,nodos,contador):
 		coord = [x,contador]
 		return coord
 
-for nombre_directorio, subdirectorios, ficheros in os.walk(experimentos.RESULTADOS_DIR	):#recorro recursivamente un directorio
+for nombre_directorio, subdirectorios, ficheros in os.walk(configPaths.RESULTADOS_DIR	):#recorro recursivamente un directorio
 	#Obtiene las coordenas
 	coordenadas=[]
 	if "malla" in nombre_directorio:
-		nodes = experimentos.COLUMNS*experimentos.ROWS
-		contador=experimentos.COLUMNS-1
+		nodes = configFormacion.COLUMNS*configFormacion.ROWS
+		contador=configFormacion.COLUMNS-1
 		identificador=1
-		for i in range(1,experimentos.COLUMNS+1):
-			for j in range(1,experimentos.ROWS+1):
-				coordenadas.append(getCoordinates(identificador,experimentos.COLUMNS,contador))
+		for i in range(1,configFormacion.COLUMNS+1):
+			for j in range(1,configFormacion.ROWS+1):
+				coordenadas.append(getCoordinates(identificador,configFormacion.COLUMNS,contador))
 				identificador+=1
 			contador-=1
 	else:
-		nodes = experimentos.NODOS_ANILLO
+		nodes = configFormacion.NODOS_ANILLO
 		for i in range(1,nodes+1):
 			coordenadas.append(getCoordinatesAnillo(i,nodes))
 	
@@ -46,10 +47,10 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(experimentos.RESULTAD
 	ultima=nombre_directorio[len(nombre_directorio)-1]
 	penultima=nombre_directorio[len(nombre_directorio)-2]
 	ciclo1=""
-	lista=["/"+str(i) for i in range(1,experimentos.EJECUCIONES+1)]
+	lista=["/"+str(i) for i in range(1,configFormacion.EJECUCIONES+1)]
 	if(penultima+ultima in lista):
-		if penultima+ultima==str("/"+str(experimentos.EJECUCIONES)):
-			ultima=str(experimentos.EJECUCIONES)
+		if penultima+ultima==str("/"+str(configFormacion.EJECUCIONES)):
+			ultima=str(configFormacion.EJECUCIONES)
 		primero=open(nombre_directorio+"/datos-salida_"+ultima+".txt","r")
 		lineasPrimero = primero.readlines()
 		primero.close()

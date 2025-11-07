@@ -1,19 +1,20 @@
-import experimentos
 import os
+import configFormacion
+import configPaths
 
-os.makedirs(f"{experimentos.RESULTADOS_DIR}/Medidas_estructurales", exist_ok=True)
+os.makedirs(f"{configPaths.RESULTADOS_DIR}/Medidas_estructurales", exist_ok=True)
 
 
-for r in experimentos.REGLAS:
-	for red in experimentos.RED:
+for r in configFormacion.REGLAS:
+	for red in configFormacion.RED:
 		if red == "anillo":
-			nombre_red = "anillo" + str(experimentos.NODOS_ANILLO)
+			nombre_red = "anillo" + str(configFormacion.NODOS_ANILLO)
 		elif red == "malla":
-			nombre_red = f"malla{experimentos.ROWS}x{experimentos.COLUMNS}"
+			nombre_red = f"malla{configFormacion.ROWS}x{configFormacion.COLUMNS}"
 		else:
 			print(f" Tipo de red desconocido, saltando: {red}")
 			continue 
-		for ruteo in experimentos.ROUTING:
+		for ruteo in configFormacion.ROUTING:
 			routing = "x"
 			if ruteo == "COMPASS-ROUTING":
 				routing = "CR"
@@ -28,9 +29,9 @@ for r in experimentos.REGLAS:
 			LIST_LTPGEN=[]
 			LIST_DIAMGEN=[]
 			LIST_GRAGEN=[]
-			for long_enlace in experimentos.LONG_ENLACES:
+			for long_enlace in configFormacion.LONG_ENLACES:
 				#primero=open(experimentos.RESULTADOS_DIR+"/"+l+"/ExperimentosCooperadores/"+i+"/"+j+"/"+k+"/datos-promedio.csv","r")
-				primero=open(f"{experimentos.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}/datos-promedio.csv","r")
+				primero=open(f"{configPaths.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}/datos-promedio.csv","r")
 				lineasPrimero = primero.readlines()
 				primero.close()
 				LIST_CICLO=[]
@@ -47,7 +48,7 @@ for r in experimentos.REGLAS:
 				LIST_CAPGEN.append(LIST_CAP)
 				LIST_LTPGEN.append(LIST_LTP)
 				LIST_DIAMGEN.append(LIST_DIAM)
-				grados=open(f"{experimentos.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}/datos-promedio_grados.csv","r")
+				grados=open(f"{configPaths.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}/datos-promedio_grados.csv","r")
 				lineasgrados = grados.readlines()
 				grados.close()
 				LIST_GRAD=[]
@@ -58,9 +59,9 @@ for r in experimentos.REGLAS:
 				LIST_GRAGEN.append(LIST_GRAD)
 			#escribo el archivo csv final de cada experimento de base
 			#datosPromedio=open(experimentos.RESULTADOS_DIR+"/Gráficas_Formación/Cooperadores_"+i+"_"+j+"_"+k+".csv","w")
-			datosPromedio=open(f"{experimentos.RESULTADOS_DIR}/Medidas_estructurales/Medidas_estructurales_{nombre_red}_R{r}_{routing}.csv","w")
+			datosPromedio=open(f"{configPaths.RESULTADOS_DIR}/Medidas_estructurales/Medidas_estructurales_{nombre_red}_R{r}_{routing}.csv","w")
 			cols_enlace=""
-			for long_enlace in experimentos.LONG_ENLACES:
+			for long_enlace in configFormacion.LONG_ENLACES:
 				cols_enlace=cols_enlace+"D"+str(long_enlace)+","
 			datosPromedio.write(",Coeficiente de Agrupamiento\n,"+cols_enlace+"\n")
 			for contador,in1 in enumerate(range(len(LIST_CAPGEN[0]))):
@@ -84,10 +85,10 @@ for r in experimentos.REGLAS:
 			for lista in LIST_GRAGEN:
 				if len(lista)>maximo:
 					maximo=len(lista)
-			if experimentos.RED=="anillo":
-				nodos=experimentos.NODOS_ANILLO
+			if configFormacion.RED=="anillo":
+				nodos=configFormacion.NODOS_ANILLO
 			else:
-				nodos=experimentos.ROWS*experimentos.COLUMNS
+				nodos=configFormacion.ROWS*configFormacion.COLUMNS
 			datosPromedio.write("\n\n,Distribución de Grados\n,"+cols_enlace+"\n")
 			for in1 in range(maximo):
 				datosPromedio.write(str(in1)+",")

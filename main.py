@@ -2,15 +2,11 @@
 import math
 import sys
 import networkx as nx
-import matplotlib.pyplot as plt
-import numpy as np
 from simulation import Simulation
 from complexNetwork import ComplexNetwork
 from event import Event
-from random import uniform
 from paquete import Paquete
 import config
-import operator
 
 class Main:#hereda de la clase object, hay que recordar que en Python todo es un objeto
 
