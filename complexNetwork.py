@@ -34,6 +34,7 @@ class ComplexNetwork(Model):
         self.paquetesRegreso=0#contador de paquetes exploradores que han regresado a mi, después de explorar la red
         self.enlacesDinamicos=[]#lista de enlaces dinámicos que tengo
         self.vecinosConectadosDinamicos=[]#lista de id´s de los nodos con los que estoy conectado mediante mis enlaces dinámicos
+        self.m_rutas = [] #Matriz de rutas usadas para enviar mis paquetes exploradores
         self.f_n = {} #Diccionario de frecuencia de visita a los nodos que no son mis vecinos, mediante mis paquetes exploradores
         self.f_e = {} #Diccionario de frecuencia de uso de mis enlaces dinámicos
         self.listaNodosSolicitados=[]#lista de id´s de nodos solicitados para conectarme con ellos en un ciclo en particular
@@ -177,6 +178,7 @@ class ComplexNetwork(Model):
                     if(event.source==enlace.idConectado):
                         self.f_e[enlace.idEnlace]+=1
                         break
+                self.m_rutas.append(event.package.rutaAuxiliar[2:])#agrego la ruta usada por el paquete a la matriz de rutas
                 nodos=self.f_n.keys()#obtengo las claves de mi diccionario de f_n, las cuales representan los nodos visitados
                 for i in range(2,len(event.package.rutaAuxiliar)):#recorro cada uno de los nodos de la ruta, excepto mi id y mi vecino directo
                     conjuntoVecinos=self.neighbors+self.vecinosConectadosDinamicos
