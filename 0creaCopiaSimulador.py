@@ -48,17 +48,18 @@ shutil.copy2("formacion.py", configPaths.BASE_DIR)
 
 for nombre_directorio, subdirectorios, ficheros in os.walk(configPaths.RESULTADOS_DIR):#recorro recursivamente un directorio
 
-	if len(subdirectorios)==0:
-		shutil.copy2("complexNetwork.py", nombre_directorio)
-		shutil.copy2("encaminamiento.py", nombre_directorio)
-		shutil.copy2("enlace.py", nombre_directorio)
-		shutil.copy2("event.py", nombre_directorio)
-		shutil.copy2("extractData.py", nombre_directorio)
-		shutil.copy2("model.py", nombre_directorio)
-		shutil.copy2("paquete.py", nombre_directorio)
-		shutil.copy2("process.py", nombre_directorio)
-		shutil.copy2("simulation.py", nombre_directorio)
-		shutil.copy2("simulator.py", nombre_directorio)
-		shutil.copy2("main.py", nombre_directorio)
-	else:
-		print("Los archivos ya habían sido copiado")
+    if len(subdirectorios)==0:
+        shutil.copy2("complexNetwork.py", nombre_directorio)
+        shutil.copy2("encaminamiento.py", nombre_directorio)
+        shutil.copy2("enlace.py", nombre_directorio)
+        shutil.copy2("event.py", nombre_directorio)
+        shutil.copy2("extractData.py", nombre_directorio)
+        shutil.copy2("model.py", nombre_directorio)
+        shutil.copy2("paquete.py", nombre_directorio)
+        shutil.copy2("process.py", nombre_directorio)
+        shutil.copy2("simulation.py", nombre_directorio)
+        shutil.copy2("simulator.py", nombre_directorio)
+        shutil.copy2("main.py", nombre_directorio)
+        shutil.copy2("reglas.py", nombre_directorio)
+    else:
+        print("Los archivos ya habían sido copiado")

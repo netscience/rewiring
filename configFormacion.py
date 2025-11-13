@@ -11,7 +11,7 @@ ROUTING=["SHORTEST-PATH","COMPASS-ROUTING","RANDOM-WALK"]                # Algor
 REGLAS=[1,2,3]              # 1,2,3
 LONG_ENLACES=[1,2,4]         # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
 #--------EJECUCION---------------
-CICLOS=4                    # Número de ciclos de recableo
+CICLOS=5                    # Número de ciclos de recableo
 EJECUCIONES = 4            # Número de ejecuciones por experimento   
 #--------EXTRAS------------------
 ENLACES_DINAMICOS=2         # Número de enlaces dinámicos por nodo

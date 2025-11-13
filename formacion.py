@@ -90,9 +90,12 @@ for red in configFormacion.RED:
                     print(f"\n Simulación {x} en: {hoja}")
 
                     salida_txt = f"{hoja}/salida_{x}.txt"
-
+                    #Creo el archivo log
+                    log_file = f"{hoja}/log_{x}.txt"
+                    with open(log_file, "w", encoding="utf-8") as logfile:
+                        logfile.write(f"Log de la ejecución {x} en {ruta}\n")
                     # Ejecuta main.py desde la carpeta CR
-                    subprocess.run([PYTHON_EXEC, "main.py"], cwd=ruta, stdout=open(salida_txt, "w"))
+                    subprocess.run([PYTHON_EXEC, "main.py", log_file], cwd=ruta, stdout=open(salida_txt, "w"))
 
                     # Copia archivos auxiliares
                     for archivo in ["extractData.py", "graph.adjlist"]:

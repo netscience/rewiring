@@ -4,17 +4,17 @@ from model import Model
 from encaminamiento import Encaminamiento
 import random
 from paquete import Paquete
+from reglas import Reglas
 from enlace import Enlace
 import sys
 import operator
-import numpy as np
 import networkx as nx
 
 class ComplexNetwork(Model):
     """La clase ComplexNetwork desciende de la clase Model e implementa los metodos init() y  
         receive()"que en la clase madre se definen como abstractos"""
 
-    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla):#constructor de la clase ComplexNetwork
+    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla,log_file):#constructor de la clase ComplexNetwork
         self.__main=main
         self.__numEnlacesDinamicos=numEnlacesDinamicos
         self.__maximoConexionesPermitidas=maximasConexiones
@@ -22,6 +22,7 @@ class ComplexNetwork(Model):
         self.__encaminamiento=Encaminamiento()
         self.__algoritmoEncaminamiento=algoritmoEncaminamiento
         self.__regla=regla
+        self.__logFile = log_file
         
     def init(self):
         self.contadorCiclos=1#contador que indica el ciclo en el que se encuentra la simulación
@@ -34,7 +35,7 @@ class ComplexNetwork(Model):
         self.paquetesRegreso=0#contador de paquetes exploradores que han regresado a mi, después de explorar la red
         self.enlacesDinamicos=[]#lista de enlaces dinámicos que tengo
         self.vecinosConectadosDinamicos=[]#lista de id´s de los nodos con los que estoy conectado mediante mis enlaces dinámicos
-        self.m_rutas = [] #Matriz de rutas usadas para enviar mis paquetes exploradores
+        self.mr = [] #Matriz de rutas 
         self.f_n = {} #Diccionario de frecuencia de visita a los nodos que no son mis vecinos, mediante mis paquetes exploradores
         self.f_e = {} #Diccionario de frecuencia de uso de mis enlaces dinámicos
         self.listaNodosSolicitados=[]#lista de id´s de nodos solicitados para conectarme con ellos en un ciclo en particular
@@ -178,17 +179,19 @@ class ComplexNetwork(Model):
                     if(event.source==enlace.idConectado):
                         self.f_e[enlace.idEnlace]+=1
                         break
-                self.m_rutas.append(event.package.rutaAuxiliar[2:])#agrego la ruta usada por el paquete a la matriz de rutas
                 nodos=self.f_n.keys()#obtengo las claves de mi diccionario de f_n, las cuales representan los nodos visitados
+                ruta = []
                 for i in range(2,len(event.package.rutaAuxiliar)):#recorro cada uno de los nodos de la ruta, excepto mi id y mi vecino directo
                     conjuntoVecinos=self.neighbors+self.vecinosConectadosDinamicos
                     """NOTA: es necesario poner la condicion event.package.rutaAuxiliar[i] not in self.neighbors por que el algoritmo de encaminamiento
                         puede hacer que los paquetes pasen por mis vecinos directos, y no debo considerarlos en f_n"""
                     if(event.package.rutaAuxiliar[i] not in conjuntoVecinos):
+                        ruta.append(event.package.rutaAuxiliar[i])
                         if(event.package.rutaAuxiliar[i] not in nodos):#si el nodo no está en las claves, lo agrego con valor 1
                             self.f_n[event.package.rutaAuxiliar[i]]=1
                         else:#si ya se encuentra el nodo en las claves del diccionario, lo incremento en 1 unidad
                             self.f_n[event.package.rutaAuxiliar[i]]+=1
+                self.mr.append(ruta)#agrego la ruta recorrida por el paquete a la matriz de rutas
                 #print("soy",self.id,"ya llegó de regreso el paquete",event.package.idPaquete,"la ruta usada original fue",event.package.rutaAuxiliar,"tiempo",event.time,"f_n:",self.f_n)
                 if(self.paquetesRegreso<self.__num_paquetes):
                     new_package=Paquete(self.id,self.paquetesRegreso)
@@ -243,35 +246,16 @@ class ComplexNetwork(Model):
                         self.transmit(newevent)
                         self.count+=1
                 #después de propagar mi PIF-NEGOCIACION, empiezo mi fase de NEGOCIACIÓN
-                if(self.__regla==1):#si estoy ejecutando R1, ordeno mi f_n
-                    #La línea siguiente ordena el diccionario primero en frecuencias y despues en id´s de nodos
-                    #self.f_n = {val[0] : val[1] for val in sorted(self.f_n.items(), key = lambda x:(-x[1], x[0]))}
-                    self.f_n = sorted(self.f_n.items(), key=operator.itemgetter(1), reverse=True)# Ordeno el diccionario f_n de mayor a menor frecuencia
-                    #NOTA: la función sorted() usada en la línea anterior, regresa una lista de tuplas
-                    self.f_n = dict(self.f_n)#convierto la lista de tuplas en un diccionario nuevamente, pero ya ordenado
-                    #print("soy",self.id,"ejecuto R1 mi f_n ordenado de mayor a menor es:",self.f_n)
-                #elif(self.__regla==2):
-                    #print("soy",self.id,"ejecuto R2 mi f_n es:",self.f_n)
-                #elif(self.__regla==3):
-                    #print("soy",self.id,"ejecuto R3 mi f_n es:",self.f_n)
                 hayEnlacesLibres=False#booleano que se activará si alguno de mis enlaces dinámicos está libre
                 if(len(self.f_n)>0):#si existen candidatos a reconexión en f_n:
                     for enlace in self.enlacesDinamicos:#recorro mi lista de enlaces dinámicos en busca de enlaces libres
                         if(enlace.libre==True):#si el enlace en cuestión está libre, mando solicitudes de CABLEADO
                             hayEnlacesLibres=True
                             clave=-1
-                            #selecciono al candidato a conexion
-                            if(self.__regla==3):#si trabajo con R3:
-                                llaves=list(self.f_n.keys())
-                                probabilidades=list(self.f_n.values())
-                                probabilidades=probabilidades/np.sum(probabilidades)
-                                #print("soy",self.id,"ejecuto R3 mis llaves son:",llaves)
-                                #print("soy",self.id,"ejecuto R3 mis probabilidades son:",list(probabilidades))
-                                clave=np.random.choice(llaves,p=probabilidades)
-                                #print("soy",self.id,"selecciono a",clave,"con f_n",self.f_n[clave])
-                            else:#si trabajo con R1 o R2:
-                                claves=list(self.f_n.keys())#obtengo las claves del diccionario f_n, en este caso son los id´s de los nodos visitados
-                                clave=claves[0]
+                            #selecciono al candidato a conexión
+                            rule = Reglas(self.__regla,self.__logFile,self.f_n, self.paquetes, self.mr)
+                            clave = rule.seleccionar_candidato()
+                                
                             distancia=-1
                             if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
                                 distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
@@ -333,17 +317,9 @@ class ComplexNetwork(Model):
                                     break
                             clave=-1
                             #selecciono al candidato a conexión
-                            if(self.__regla==3):#si trabajo con R3:
-                                llaves=list(self.f_n.keys())
-                                probabilidades=list(self.f_n.values())
-                                probabilidades=probabilidades/np.sum(probabilidades)
-                                #print("soy",self.id,"ejecuto R3 mis llaves son:",llaves)
-                                #print("soy",self.id,"ejecuto R3 mis probabilidades son:",list(probabilidades))
-                                clave=np.random.choice(llaves,p=probabilidades)
-                                #print("soy",self.id,"selecciono a",clave,"con f_n",self.f_n[clave])
-                            else:#si trabajo con R1 o R2:
-                                claves=list(self.f_n.keys())#obtengo las claves del diccionario f_n, en este caso son los id´s de los nodos visitados
-                                clave=claves[0]    
+                            rule = Reglas(self.__regla,self.__logFile,self.f_n, self.paquetes, self.mr)
+                            clave = rule.seleccionar_candidato()   
+                                    
                             nodoConexion=-1
                             #reviso si se puede hacer el recableado:
                             distancia=-1
