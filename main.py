@@ -126,7 +126,7 @@ if __name__ == "__main__":
 		#el sexto parámetro indica el número de la regla de recableado que el nodo ejecutará en la fase de negociación
 		#el septimo parámetro es el número de ejecucipon para ubicar archivo de log donde se registrarán los eventos del nodo
   		#opciones de reglas de recableado: R1=>1, R2=>2, R3=>3
-		m = ComplexNetwork(main,config.ENLACES_DINAMICOS,main.nodosTotales/config.DIV_CONEXIONES,config.EXPLORADORES,config.ROUTING,config.REGLA,sys.argv[1])
+		m = ComplexNetwork(main,config.ENLACES_DINAMICOS,main.nodosTotales/config.DIV_CONEXIONES,config.EXPLORADORES,config.ROUTING,config.REGLA,config.VECTOR_POPULARIDAD,config.VECTOR_DISTANCIA,config.ALPHA,sys.argv[1])
 		experiment.setModel(m, i)
 	#inserta un evento semilla en la agenda y arranca
 	#para comenzar la simulacion el coordinador arranca un PIF en donde avisará a todos que hagan su fase de EXPOLRACIÓN

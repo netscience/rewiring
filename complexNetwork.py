@@ -14,7 +14,7 @@ class ComplexNetwork(Model):
     """La clase ComplexNetwork desciende de la clase Model e implementa los metodos init() y  
         receive()"que en la clase madre se definen como abstractos"""
 
-    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla,log_file):#constructor de la clase ComplexNetwork
+    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla,vector_popularidad,vector_distancia,alpha,log_file):#constructor de la clase ComplexNetwork
         self.__main=main
         self.__numEnlacesDinamicos=numEnlacesDinamicos
         self.__maximoConexionesPermitidas=maximasConexiones
@@ -22,6 +22,9 @@ class ComplexNetwork(Model):
         self.__encaminamiento=Encaminamiento()
         self.__algoritmoEncaminamiento=algoritmoEncaminamiento
         self.__regla=regla
+        self.__vector_popularidad=vector_popularidad
+        self.__vector_distancia=vector_distancia
+        self.__alpha=alpha
         self.__logFile = log_file
         
     def init(self):
@@ -253,7 +256,7 @@ class ComplexNetwork(Model):
                             hayEnlacesLibres=True
                             clave=-1
                             #selecciono al candidato a conexión
-                            rule = Reglas(self.__regla,self.__logFile,self.f_n, self.paquetes, self.mr)
+                            rule = Reglas(self.__regla,self.__vector_popularidad,self.__vector_distancia,self.__alpha,self.__logFile,self.f_n, self.paquetes, self.mr)
                             clave = rule.seleccionar_candidato()
                                 
                             distancia=-1
@@ -261,7 +264,7 @@ class ComplexNetwork(Model):
                                 distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
                             else:#si estoy trabajando en un anillo:
                                 distancia=self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main)
-                            if(distancia<=enlace.longitud):
+                            if(distancia<=enlace.longitud):#el candidato seleccionado cumple con la restricción de distancia del enlace
                                 #if(clave in self.neighbors or clave in self.vecinosConectadosDinamicos):
                                     #print("no puede ser ese nodo esta en mis vecinos")
                                 new_package=Paquete(self.id,0)#a este paquete se le puede agregar lo que sea
@@ -296,7 +299,10 @@ class ComplexNetwork(Model):
                                 #else:
                                     #print("soy",self.id,"mando",newevent.name,"a",clave,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlace.idEnlace,"la distancia del enlace es",self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
                                 #print("soy",self.id,"elimino a",clave,"de mi f_n")
+                                with open(self.__logFile, "a", encoding="utf-8") as f:
+                                    f.write(f"f_n (después): {self.f_n}\n")
                                 del self.f_n[clave]#elimino al nodo de la lista de frecuencias para que no se considere en futuros ciclos
+                                self.mr = [[x for x in sublista if x != clave] for sublista in self.mr]
                                 #print("soy",self.id,"mi f_n queda asi:",self.f_n)
                                 if(self.__regla==2):#si ejecuto r2 rompo el ciclo
                                     break
@@ -317,7 +323,7 @@ class ComplexNetwork(Model):
                                     break
                             clave=-1
                             #selecciono al candidato a conexión
-                            rule = Reglas(self.__regla,self.__logFile,self.f_n, self.paquetes, self.mr)
+                            rule = Reglas(self.__regla,self.__vector_popularidad,self.__vector_distancia,self.__alpha,self.__logFile,self.f_n, self.paquetes, self.mr)
                             clave = rule.seleccionar_candidato()   
                                     
                             nodoConexion=-1
@@ -612,6 +618,7 @@ class ComplexNetwork(Model):
         self.paquetes.clear()
         self.paquetesRegreso=0
         self.f_n.clear()
+        self.mr.clear()
         #reincio la frecuencia de mi enlaces dinamicos
         claves=self.f_e.keys()
         for i in claves:

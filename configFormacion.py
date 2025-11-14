@@ -6,10 +6,15 @@ ROWS=8                      # Filas de la malla. Colocar 0 si no se usa malla
 COLUMNS=8                   # Columnas de la malla
 #--------FORMACION-------------
 # Estos parámetros se deben definir como lista aunque contengan un solo valor
-RED=["malla","anillo"]  # Tipo de red: "malla", "anillo"
-ROUTING=["SHORTEST-PATH","COMPASS-ROUTING","RANDOM-WALK"]                # Algoritmo de encaminamiento: "COMPASS-ROUTING", "RANDOM-WALK", "SHORTEST-PATH"
-REGLAS=[1,2,3]              # 1,2,3
+RED=["malla"]#,"anillo"]  # Tipo de red: "malla", "anillo"
+ROUTING=["SHORTEST-PATH"]#,"COMPASS-ROUTING","RANDOM-WALK"]                # Algoritmo de encaminamiento: "COMPASS-ROUTING", "RANDOM-WALK", "SHORTEST-PATH"
+REGLAS=[4,1]              # 1,2,3
 LONG_ENLACES=[1,2,4]         # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
+#--------REGLA 4--------------
+ALPHA=0.5          # Valor de alfa para la regla 4: 0.0, 0.5, 1.
+# Ambos vectores deben tener la misma longitud
+VECTOR_POPULARIDAD=[1,0,0,0,0,0,0,0,0,0]  # Vector de popularidad para la regla 4
+VECTOR_DISTANCIA=[1,1,1,1,1,1,1,1,1,1]      # Vector de distancia para la regla 4
 #--------EJECUCION---------------
 CICLOS=5                    # Número de ciclos de recableo
 EJECUCIONES = 4            # Número de ejecuciones por experimento   
