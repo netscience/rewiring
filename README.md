@@ -1,4 +1,4 @@
-# Análisis del Proyecto: Simulador de Reconexión en Redes Complejas
+# Rewiring: Simulador de Reconexión en Redes Complejas
 
 ## Descripción General
 
@@ -215,5 +215,331 @@ Con la configuración en [configuracion.py](file:///Users/usuario/Repositorios/r
 - `matplotlib` — generación de imágenes PNG
 - Librería estándar: `math`, `random`, `sys`, [os](file:///Users/usuario/Repositorios/rewiring/main.py#65-68), `shutil`, `subprocess`, [re](file:///Users/usuario/Repositorios/rewiring/.DS_Store), `operator`, `pathlib`
 
-> [!NOTE]
-> El proyecto no incluye `requirements.txt` ni tests automatizados.
+### Instalación
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## Diagramas de Secuencia
+
+### 1. Inicialización del Simulador
+
+```mermaid
+sequenceDiagram
+    participant M as main.py
+    participant Main as Main
+    participant NX as NetworkX
+    participant Sim as Simulation
+    participant Eng as Simulator
+    participant P as Process[i]
+    participant CN as ComplexNetwork[i]
+
+    M->>Main: __init__()
+    Main->>Main: Lee config (nodos, ciclos, grafo)
+
+    alt grafo == 1 (Malla)
+        M->>Main: createGrid()
+        Main->>NX: grid_2d_graph(rows, cols)
+    else grafo == 3 (Anillo)
+        M->>Main: createRing()
+        Main->>NX: circulant_graph(nodes, [1])
+    end
+
+    M->>Sim: Simulation(maxtime, main)
+    Sim->>Eng: Simulator(maxtime)
+    M->>Sim: readAdjacencyListNetworkX()
+    Sim->>NX: graph.nodes(), neighbors()
+
+    loop Para cada nodo i = 1..N
+        Sim->>P: Process(neighbors, weights, engine, i)
+        M->>CN: ComplexNetwork(main, params...)
+        M->>Sim: setModel(CN, i)
+        Sim->>P: setModel(CN, port=0)
+        P->>CN: setProcess(process, neighbors, weights, id)
+        P->>CN: init()
+        CN->>CN: creaLongitudEnlacesDinamicos()
+    end
+
+    M->>M: Crea Paquete semilla
+    M->>Sim: init(Event "PIF-EXPLORACION")
+    Sim->>Eng: insertEvent(seed)
+    M->>Sim: run()
+    
+    loop Mientras engine.isOn()
+        Sim->>Eng: returnEvent()
+        Eng-->>Sim: nextEvent
+        Sim->>P: setTime(time)
+        Sim->>P: receive(event)
+        P->>CN: receive(event)
+    end
+```
+
+### 2. Fase de Exploración (PIF-EXPLORACION)
+
+```mermaid
+sequenceDiagram
+    participant C as Nodo Coordinador
+    participant A as Nodo A (vecino)
+    participant B as Nodo B (lejano)
+    participant Eng as Simulator
+
+    Note over C: El coordinador arranca el PIF
+    C->>Eng: Event("PIF-EXPLORACION", t, A, C, pkt)
+    C->>C: visited = True, father = self
+
+    Note over C: Inicia exploración propia
+    C->>C: Crea Paquete explorador (según algoritmo)
+    
+    alt COMPASS-ROUTING
+        C->>C: generaDestino() + Compass_Routing()
+    else RANDOM-WALK
+        C->>C: distanciaMaxima = random(2, diámetro)
+        C->>C: Random_Walk()
+    else SHORTEST-PATH
+        C->>C: generaDestino() + shortestPath()
+    end
+    
+    C->>Eng: Event("PACKAGE", t+1, nextStep, C, pkt)
+
+    Eng-->>A: PIF-EXPLORACION
+    A->>A: visited = True, father = C
+    A->>Eng: Propaga PIF a vecinos (excepto padre)
+    A->>A: Crea y envía su propio paquete explorador
+    A->>Eng: Event("PACKAGE", t+2, nextStep, A, pkt)
+
+    Note over B: Recibe PACKAGE
+    Eng-->>B: PACKAGE
+    
+    alt No llegó al destino
+        B->>B: Elimina nodos visitados de vecinos
+        B->>Eng: Event("PACKAGE", t+3, nextStep, B, pkt)
+    else Llegó al destino o sin vecinos
+        B->>B: Invierte ruta del paquete
+        B->>Eng: Event("ACK", t+3, prevStep, B, pkt)
+    end
+
+    Note over A: Recibe ACK
+    Eng-->>A: ACK
+    
+    alt Falta recorrer ruta
+        A->>Eng: Reenvía ACK al siguiente nodo
+    else ACK llegó al origen
+        A->>A: paquetesRegreso++
+        A->>A: Actualiza f_n (frecuencia nodos)
+        A->>A: Actualiza f_e (frecuencia enlaces)
+        
+        alt paquetesRegreso < num_paquetes
+            A->>A: Crea nuevo paquete explorador
+            A->>Eng: Event("PACKAGE", ...)
+        end
+    end
+
+    Note over A: Cuando count==0 y todos los ACKs recibidos
+    A->>Eng: Event("PIF-EXPLORACION", t, padre, A, null)
+    Note over A: Reporta terminación al padre
+
+    Note over C: Coordinador recibe todos los reportes
+    C->>C: reiniciaPIF()
+    C->>Eng: Event("PIF-NEGOCIACION", t, C, C, null)
+    Note over C: Inicia Fase 2
+```
+
+### 3. Fase de Negociación (PIF-NEGOCIACION)
+
+```mermaid
+sequenceDiagram
+    participant C as Coordinador
+    participant A as Nodo A (solicitante)
+    participant R as Nodo intermedio
+    participant B as Nodo B (destino)
+    participant Eng as Simulator
+
+    C->>Eng: Event("PIF-NEGOCIACION", t, vecinos, C)
+    Note over C: Propaga PIF a todos los vecinos
+
+    Eng-->>A: PIF-NEGOCIACION
+    A->>A: visited = True
+    A->>Eng: Propaga PIF a sus vecinos
+
+    Note over A: Evalúa f_n para seleccionar candidato
+
+    alt Tiene enlaces dinámicos libres
+        A->>A: Reglas.seleccionar_candidato()
+        A->>A: Verifica restricción de distancia
+        A->>A: Busca ruta más corta en paquetes previos
+        A->>Eng: Event("SOLICITUD-CONEXION", t+1, R, A, pkt)
+        A->>A: numeroSolicitudes++
+    else No tiene enlaces libres
+        A->>A: Ordena f_e (menor frecuencia primero)
+        alt f_e[menor] < umbral
+            A->>A: Reglas.seleccionar_candidato()
+            A->>A: Verifica frecuencia y distancia
+            A->>Eng: Event("SOLICITUD-CONEXION", t+1, R, A, pkt)
+            Note over A: Propone recableado
+        else f_e[menor] >= umbral
+            Note over A: No hace nada
+        end
+    end
+
+    Eng-->>R: SOLICITUD-CONEXION
+    R->>Eng: Reenvía por la ruta hacia B
+
+    Eng-->>B: SOLICITUD-CONEXION (ruta vacía = llegó)
+    
+    alt B solicitó a A también (cruce)
+        alt B.id > A.id y conexiones < máximo
+            B->>Eng: Event("ACEPTO-CONEXION", ...)
+            B->>B: neighborsPendientes.add(A)
+        else B.id < A.id
+            B->>Eng: Event("RECHAZO-CONEXION", ...)
+        end
+    else B no solicitó a A
+        alt conexiones < máximo
+            B->>Eng: Event("ACEPTO-CONEXION", ...)
+            B->>B: neighborsPendientes.add(A)
+        else conexiones >= máximo
+            B->>Eng: Event("RECHAZO-CONEXION", ...)
+        end
+    end
+
+    Eng-->>A: ACEPTO-CONEXION (llega al origen)
+    A->>A: numeroSolicitudes--
+    A->>A: solicitudesPendientes.add(paquete)
+    
+    alt Enlace ya conectado (recableado)
+        A->>Eng: Event("DESCONEXION", t, nodoViejo, A)
+        A->>A: numeroSolicitudes++
+        Eng-->>A: DESCONEXION-RECIBIDA
+        A->>A: numeroSolicitudes--
+    end
+
+    Note over A: Cuando numeroSolicitudes==0 y count==0
+    A->>Eng: Event("PIF-NEGOCIACION", padre, A)
+
+    Note over C: Coordinador completa PIF
+    C->>Eng: Event("PIF-CONEXION", t, C, C)
+    Note over C: Inicia Fase 3
+```
+
+### 4. Fase de Conexión (PIF-CONEXION)
+
+```mermaid
+sequenceDiagram
+    participant C as Coordinador
+    participant A as Nodo A
+    participant B as Nodo B (desconectado)
+    participant NX as Grafo NetworkX
+    participant Eng as Simulator
+
+    C->>Eng: Event("PIF-CONEXION", t, vecinos, C)
+
+    Eng-->>A: PIF-CONEXION
+    A->>A: visited = True
+
+    Note over A: Materializa conexiones pendientes
+    
+    alt neighborsPendientes no vacío
+        A->>A: neighbors.add(cada pendiente)
+    end
+    
+    alt neighborsPendientesEliminación no vacío
+        A->>A: neighbors.remove(cada eliminado)
+    end
+
+    loop Para cada solicitud aceptada
+        A->>A: Busca enlace dinámico por idEnlace
+        alt enlace ya conectado (recableado)
+            A->>A: vecinosDinámicos.remove(viejo)
+            A->>NX: graph.remove_edge(A, viejo)
+            A->>A: print("r A viejo nuevo ciclo")
+        else enlace libre (cableado nuevo)
+            A->>A: print("c A -1 nuevo ciclo")
+        end
+        A->>NX: graph.add_edge(A, nuevo)
+        A->>A: enlace.idConectado = nuevo
+        A->>A: enlace.libre = False
+        A->>A: vecinosDinámicos.add(nuevo)
+    end
+
+    Note over A: Propaga PIF-CONEXION a vecinos actualizados
+    A->>Eng: Event("PIF-CONEXION", vecinos)
+
+    Note over A: Cuando count == 0
+    A->>A: contadorCiclos++
+    A->>A: reiniciaAtributosParaCicloNuevo()
+    A->>Eng: Event("PIF-CONEXION", padre, A)
+
+    Note over C: Coordinador recibe todos los reportes
+    C->>C: reiniciaAtributosParaCicloNuevo()
+    
+    alt contadorCiclos < maxCiclos
+        C->>NX: diameter(graph)
+        alt diámetro > 2
+            C->>Eng: Event("PIF-EXPLORACION", ...)
+            Note over C: Nuevo ciclo de reconexión
+        else diámetro == 2
+            Note over C: Red completamente conexa, detiene simulación
+        end
+    else ciclos completados
+        Note over C: FIN de la simulación
+    end
+```
+
+### 5. Pipeline de Experimentos
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant S0 as 0creaCopiaSimulador
+    participant F as formacion.py
+    participant Main as main.py
+    participant ED as extractData.py
+    participant S1 as 1creaPromedios
+    participant S2 as 2creaPromDistGrados
+    participant S3 as 3creaImagenesPNG
+    participant S4 as 4creaGEXF
+    participant S5 as 5creaTablas
+    participant FS as ResultadosCN/
+
+    U->>S0: Ejecuta paso 0
+    S0->>FS: Crea árbol: red/R{n}/ruteo/D{n}/
+    S0->>FS: Copia archivos del simulador
+
+    U->>F: Ejecuta formacion.py
+    
+    loop Por cada combinación (red × regla × ruteo × enlace)
+        F->>FS: Genera config.py con parámetros
+        loop x = 1..EJECUCIONES
+            F->>Main: subprocess.run(main.py)
+            Main-->>FS: stdout → salida_x.txt
+            F->>ED: subprocess.run(extractData.py, salida_x.txt)
+            ED->>FS: datos-salida_x.txt
+            ED->>FS: graph_test_ciclo.adjlist
+            ED->>FS: hist_test_ciclo.txt
+        end
+    end
+
+    U->>S1: Ejecuta paso 1
+    S1->>FS: Promedia AvCl, ASPL, Diámetro
+    S1->>FS: → datos-promedio.csv (con std)
+
+    U->>S2: Ejecuta paso 2
+    S2->>FS: Promedia distribuciones de grado
+    S2->>FS: → datos-promedio_grados.csv
+
+    U->>S3: Ejecuta paso 3
+    S3->>FS: Genera visualización de grafos
+    S3->>FS: → img_graph_test_*.png
+    S3->>FS: → distGrados*.png
+
+    U->>S4: Ejecuta paso 4
+    S4->>FS: Exporta grafos con coordenadas
+    S4->>FS: → graph_test_*.gexf
+
+    U->>S5: Ejecuta paso 5
+    S5->>FS: Consolida medidas estructurales
+    S5->>FS: → Medidas_estructurales/*.csv
+```
