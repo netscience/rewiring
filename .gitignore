@@ -6,3 +6,4 @@ __pycache__/
 *.dist
 *.docx
 *.DS_Store
+*.code-workspace
