@@ -4,36 +4,12 @@ from collections import Counter
 import copy
 
 class Reglas:
-    def __init__(self,regla,vector_popularidad,vector_distancia,alpha,logFile,f_n,paquetes,rutas):
+    def __init__(self,regla,f_n,paquetes):
         self.r=regla
-        self.vector_popularidad=vector_popularidad
-        self.vector_distancia=vector_distancia
-        self.alpha=alpha
         self.f_n=f_n 
         self.paquetes=paquetes
-        self.log_file=logFile
-        self.rutas=rutas
         self.candidato=-1
-        self.popularidad = []
-        self.distancia = []
-    
-    def registrar_evento(self):
-        with open(self.log_file, "a", encoding="utf-8") as f:
-            f.write("\n--------------------------------------\n")
-            f.write(f"Regla ejecutada: {self.r}\n")
-            f.write(f"Vector popularidad: {self.vector_popularidad}\n")
-            f.write(f"Vector distancia: {self.vector_distancia}\n")
-            f.write(f"Alpha: {self.alpha}\n")
-            f.write(f"Popularidad: {self.popularidad}\n")
-            f.write(f"Distancia: {self.distancia}\n")
-            f.write(f"f_n: {self.f_n}\n")
-            f.write("Paquetes:\n")
-            for p in self.paquetes:
-                f.write(f"   - {getattr(p, 'rutaAuxiliar', 'sin rutaAuxiliar')}\n")
-            for r in self.rutas:
-                f.write(f"   - Ruta en matriz: {r}\n")
-            f.write(f"Candidato seleccionado: {self.candidato}\n")
-            
+         
     def seleccionar_candidato(self):
         if self.r==1:
             self.candidato=self.regla_1()
@@ -41,9 +17,6 @@ class Reglas:
             self.candidato=self.regla_2()
         elif self.r==3:
             self.candidato=self.regla_3()
-        elif self.r==4:
-            self.candidato=self.regla_4()
-        self.registrar_evento()
         return self.candidato
 
     def regla_1(self):

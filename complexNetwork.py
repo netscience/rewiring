@@ -14,7 +14,7 @@ class ComplexNetwork(Model):
     """La clase ComplexNetwork desciende de la clase Model e implementa los metodos init() y  
         receive()"que en la clase madre se definen como abstractos"""
 
-    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla,vector_popularidad,vector_distancia,alpha,log_file):#constructor de la clase ComplexNetwork
+    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla):#constructor de la clase ComplexNetwork
         self.__main=main
         self.__numEnlacesDinamicos=numEnlacesDinamicos
         self.__maximoConexionesPermitidas=maximasConexiones
@@ -22,10 +22,6 @@ class ComplexNetwork(Model):
         self.__encaminamiento=Encaminamiento()
         self.__algoritmoEncaminamiento=algoritmoEncaminamiento
         self.__regla=regla
-        self.__vector_popularidad=vector_popularidad
-        self.__vector_distancia=vector_distancia
-        self.__alpha=alpha
-        self.__logFile = log_file
         
     def init(self):
         self.contadorCiclos=1#contador que indica el ciclo en el que se encuentra la simulación
@@ -38,7 +34,6 @@ class ComplexNetwork(Model):
         self.paquetesRegreso=0#contador de paquetes exploradores que han regresado a mi, después de explorar la red
         self.enlacesDinamicos=[]#lista de enlaces dinámicos que tengo
         self.vecinosConectadosDinamicos=[]#lista de id´s de los nodos con los que estoy conectado mediante mis enlaces dinámicos
-        self.mr = [] #Matriz de rutas 
         self.f_n = {} #Diccionario de frecuencia de visita a los nodos que no son mis vecinos, mediante mis paquetes exploradores
         self.f_e = {} #Diccionario de frecuencia de uso de mis enlaces dinámicos
         self.listaNodosSolicitados=[]#lista de id´s de nodos solicitados para conectarme con ellos en un ciclo en particular
@@ -194,7 +189,6 @@ class ComplexNetwork(Model):
                             self.f_n[event.package.rutaAuxiliar[i]]=1
                         else:#si ya se encuentra el nodo en las claves del diccionario, lo incremento en 1 unidad
                             self.f_n[event.package.rutaAuxiliar[i]]+=1
-                self.mr.append(ruta)#agrego la ruta recorrida por el paquete a la matriz de rutas
                 #print("soy",self.id,"ya llegó de regreso el paquete",event.package.idPaquete,"la ruta usada original fue",event.package.rutaAuxiliar,"tiempo",event.time,"f_n:",self.f_n)
                 if(self.paquetesRegreso<self.__num_paquetes):
                     new_package=Paquete(self.id,self.paquetesRegreso)
@@ -256,7 +250,7 @@ class ComplexNetwork(Model):
                             hayEnlacesLibres=True
                             clave=-1
                             #selecciono al candidato a conexión
-                            rule = Reglas(self.__regla,self.__vector_popularidad,self.__vector_distancia,self.__alpha,self.__logFile,self.f_n, self.paquetes, self.mr)
+                            rule = Reglas(self.__regla,self.f_n, self.paquetes)
                             clave = rule.seleccionar_candidato()
                                 
                             distancia=-1
@@ -299,10 +293,8 @@ class ComplexNetwork(Model):
                                 #else:
                                     #print("soy",self.id,"mando",newevent.name,"a",clave,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlace.idEnlace,"la distancia del enlace es",self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
                                 #print("soy",self.id,"elimino a",clave,"de mi f_n")
-                                with open(self.__logFile, "a", encoding="utf-8") as f:
-                                    f.write(f"f_n (después): {self.f_n}\n")
+
                                 del self.f_n[clave]#elimino al nodo de la lista de frecuencias para que no se considere en futuros ciclos
-                                self.mr = [[x for x in sublista if x != clave] for sublista in self.mr]
                                 #print("soy",self.id,"mi f_n queda asi:",self.f_n)
                                 if(self.__regla==2):#si ejecuto r2 rompo el ciclo
                                     break
@@ -323,7 +315,7 @@ class ComplexNetwork(Model):
                                     break
                             clave=-1
                             #selecciono al candidato a conexión
-                            rule = Reglas(self.__regla,self.__vector_popularidad,self.__vector_distancia,self.__alpha,self.__logFile,self.f_n, self.paquetes, self.mr)
+                            rule = Reglas(self.__regla,self.f_n, self.paquetes)
                             clave = rule.seleccionar_candidato()   
                                     
                             nodoConexion=-1
@@ -618,7 +610,6 @@ class ComplexNetwork(Model):
         self.paquetes.clear()
         self.paquetesRegreso=0
         self.f_n.clear()
-        self.mr.clear()
         #reincio la frecuencia de mi enlaces dinamicos
         claves=self.f_e.keys()
         for i in claves:

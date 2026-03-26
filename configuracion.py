@@ -3,7 +3,7 @@ from pathlib import Path
 #Configuración de una serie de experimentos de formación de redes
 #--------- Directorios para guardar resultados -----------
 home_path = Path.home()
-BASE_DIR = str(home_path) + "/Documents/Repositorios/ResultadosCN/"
+BASE_DIR = str(home_path) + "/Repositorios/ResultadosCN/"
 RESULTADOS_DIR = BASE_DIR + "Formacion"
 #-------- Red inicial: Anillo ------------------
 NODOS_ANILLO=64             # Número de nodos del anillo. Colocar 0 si no se usa anillo

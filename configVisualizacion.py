@@ -1,5 +1,4 @@
-import configFormacion
-import configDegradacion
+import configuracion
 #Configuración para la visualización de los resultados de experimentos.s
 #--------VISUALIZACION-----------
 #Parametros para 3creaImagenesPNG.py
@@ -11,29 +10,29 @@ NODE_SCALE = 20
 #Parametros para 9creaGraficasResumenFinal.py         
 COLS_ENLACE = "" #"D,D2,D4"
 TAM_ENLACES = []
-for i in range(len(configFormacion.LONG_ENLACES)):
-    l = configFormacion.LONG_ENLACES[i]
+for i in range(len(configuracion.LONG_ENLACES)):
+    l = configuracion.LONG_ENLACES[i]
     if l == 1:
         COLS_ENLACE+="D"
         TAM_ENLACES.append("D")
     else:
         COLS_ENLACE+=",D"+str(l)
         TAM_ENLACES.append("D"+str(l))
-    if i < len(configFormacion.LONG_ENLACES)-1:
+    if i < len(configuracion.LONG_ENLACES)-1:
         COLS_ENLACE+=","
     
 COLS_REGLAS = ""
 REGLAS = []
-for i in range(len(configFormacion.REGLAS)):
-    l = configFormacion.REGLAS[i]
+for i in range(len(configuracion.REGLAS)):
+    l = configuracion.REGLAS[i]
     COLS_REGLAS+=",R"+str(l)
     REGLAS.append("R"+str(l))
-    if i < len(configFormacion.REGLAS)-1:
+    if i < len(configuracion.REGLAS)-1:
         COLS_REGLAS+=","
 
 COLS_ROUTING = []
-for r in configFormacion.ROUTING:
-    r = configFormacion.ROUTING[i]
+for r in configuracion.ROUTING:
+    r = configuracion.ROUTING[i]
     if r == "SHORTEST-PATH":
         ar = "SP"
     elif r == "COMPASS-ROUTING":
@@ -45,12 +44,12 @@ for r in configFormacion.ROUTING:
 COLS_CONEXIONES = "n"
 #PARA AGENTES COOPERADORES:
 TOPOLOGIAS=[]#["malla8x8","anillo50"]
-for i in range(len(configFormacion.RED)):
-    r = configFormacion.RED[i]
+for i in range(len(configuracion.RED)):
+    r = configuracion.RED[i]
     if r == "malla":
-        t="malla"+str(configFormacion.ROWS)+"x"+str(configFormacion.COLUMNS)
+        t="malla"+str(configuracion.ROWS)+"x"+str(configuracion.COLUMNS)
     elif r == "anillo":
-        t="anillo"+str(configFormacion.NODOS_ANILLO)
+        t="anillo"+str(configuracion.NODOS_ANILLO)
     TOPOLOGIAS.append(t)    
 ALG_ENCAMINAMIENTO=COLS_ROUTING
 
@@ -61,4 +60,4 @@ ALG_ENCAMINAMIENTO=COLS_ROUTING
 #CONEXIONES_SC=["n4","n16","n64"]
 
 #PARA AGENTES DEGRADACION:
-DEGRADACION=configDegradacion.TIPO_DEGRADACION  #["Fallas","Ataques"]
+#DEGRADACION=configDegradacion.TIPO_DEGRADACION  #["Fallas","Ataques"]

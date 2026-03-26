@@ -4,7 +4,6 @@ import os
 import shutil
 import configuracion
 # Ruta base actual (asegúrate de estar en ResultadosCN1 al ejecutar)
-BASE_DIR = Path.cwd()
 PYTHON_EXEC = "python"  # Si tu entorno ya responde a 'python'
 
 
@@ -24,9 +23,6 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla,tipo_red, ruteo
         # Algoritmo de encaminamiento: "CR", "RW", "SP"
         "ROUTING":ruteo, 
         "REGLA":regla,
-        "VECTOR_POPULARIDAD":configuracion.VECTOR_POPULARIDAD,
-        "VECTOR_DISTANCIA":configuracion.VECTOR_DISTANCIA,
-        "ALPHA":configuracion.ALPHA,
         # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
         "LONG_ENLACE":long_enlace,        
         #--------EJECUCION---------------
