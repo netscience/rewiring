@@ -64,75 +64,7 @@ class Reglas:
         probabilidades=probabilidades/np.sum(probabilidades)
         clave=np.random.choice(llaves,p=probabilidades)
         return clave
-    
-    def matrices(self, long):                   # Recibe una lista de listas
-        distancia = []
-        popularidad = []
-        listas = copy.deepcopy(self.rutas)
-        if len(listas)==0:
-            return popularidad, distancia
-        listas = [j for j in listas if j]           # Si encuentro una lista vacia
-        for posicion, lista in enumerate(listas):   # Obtenemos la matriz de distancia con listas de igual longitud
-            if len(lista) > long:                   # Si la lista es mayor a longitud
-                lista = lista[:long]                # Cortar la lista hasta la longitud
-                listas[posicion] = lista            # Reemplazar la lista recortada
-        lista = [i for num in listas for i in num]  # Convertir la lista de listas en una sola lista.
-        conteo = Counter(lista)                     # Diccionario con el conteo de cada nodo en la lista.
-        for lista in listas:                        # Llenar la lista de distancia con listas de igual longitud
-            if len(lista) == long:                  # Si la lista es igual a la longitud
-                distancia.append(lista)             # Agregar la lista directamente
-            if len(lista) < long:                   # Si la lista es menor que longitud
-                while len(lista) < long:
-                    lista.append(0)                 # Rellenar de ceros la lista
-                distancia.append(lista)
-            reordenar_lista = sorted(lista, key=lambda x: conteo.get(x,0), reverse=True) # Ordena en función de la frecuencia, de mayor a menor
-            popularidad.append(reordenar_lista)     # Reordenamos para obtener la matriz de popularidad
-            #print(conteo)
-        return popularidad, distancia
-    
-    def frecuencia(self, matriz, vector):
-        if len(matriz)==0:                                            # Matriz vacia
-            return {} 
-        filas = len(matriz)                                           # Número de filas
-        columnas = len(vector)                                        # Número de columnas
-        suma_seleccionados = 0                                        # Suma de nodos seleccionados
-        indices_seleccionados = [i for i in range(columnas) if vector[i]!=0]  # Lista de indices seleccionados del vector
-        long = len(indices_seleccionados)                             # Total de columnas seleccionadas
-        seleccion = [[0 for i in range(long)] for i in range(filas)]  # Matriz de ceros para las columnas seleccionadas
-        frecuencia = {}                                               # Diccionarios de frecuencias de cada nodo
-        for i in range(filas):
-            for posicion, indice in enumerate(indices_seleccionados):
-                nodo = vector[indice]*matriz[i][indice]
-                if nodo != 0:
-                    suma_seleccionados += 1                           # Total de nodos seleccionados sin contar el cero
-                    seleccion[i][posicion] = nodo                     # Guarda los nodos seleccionados
-                    if nodo in frecuencia:                            # Si ya se encuentra el nodo en el diccionario,
-                        frecuencia[nodo] += 1                         # entonces suma un uno
-                    else:
-                        frecuencia[nodo] = 1                          # Si no, colocar un uno
-        if 0 in frecuencia:
-            del frecuencia[0]
-        return frecuencia
-    
-    def nodos_seleccionados(self, popularidad, distancia):
-        frecuencias_popularidad = self.frecuencia(popularidad, self.vector_popularidad)
-        frecuencias_distancia = self.frecuencia(distancia, self.vector_distancia)
-        if len(frecuencias_distancia)==0 and len(frecuencias_popularidad)==0 : # Sin ambos diccionarios son vacios
-            return {}
-        if self.alpha==0:
-            return frecuencias_distancia                                                          
-        elif self.alpha==1:                 
-            return frecuencias_popularidad
-        else: 
-            claves = set(frecuencias_popularidad.keys()) | set(frecuencias_distancia.keys())    
-            freq = {}
-            for nodo in claves:
-                frecuencia_popularidad = frecuencias_popularidad.get(nodo, 0)
-                frecuencia_distancia = frecuencias_distancia.get(nodo, 0)
-                freq[nodo] = self.alpha*frecuencia_popularidad + (1-self.alpha)*frecuencia_distancia # Modelo representativo de las reglas
-            return freq
-    
-    def regla_4(self):
+ 
         long = len(self.vector_distancia)
         popularidad, distancia = self.matrices(long)
         self.popularidad = popularidad
