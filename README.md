@@ -60,15 +60,15 @@ El flujo de trabajo se ejecuta en orden secuencial:
 
 | Paso | Script | Descripción |
 |------|--------|-------------|
-| 0 | `0creaCopiaSimulador.py` | Crea el árbol de directorios y copia los scripts del simulador |
-| — | `formacion.py` | Ejecuta `main.py` + `extractData.py` para cada combinación de parámetros |
-| 1 | `1creaPromediosFormacion.py` | Calcula promedios y desviación estándar → `datos-promedio.csv` |
-| 2 | `2creaPromediosDistGradosFormacion.py` | Promedia distribuciones de grado → `datos-promedio_grados.csv` |
-| 3 | `3creaImagenesPNG.py` | Genera imágenes de grafos e histogramas de distribución de grados |
-| 4 | `4creaGEXF.py` | Exporta grafos a formato GEXF (para Gephi con geoLayout) |
-| 5 | `5creaTablasFormacion.py` | Genera tablas CSV consolidadas en `Formacion/Medidas_estructurales/` |
+| 1 | `0creaCopiaSimulador.py` | Crea el árbol de directorios y copia los scripts del simulador |
+| 2 | `formacion.py` | Ejecuta `main.py` + `extractData.py` para cada combinación de parámetros |
+| 3 | `1creaPromediosFormacion.py` | Calcula promedios y desviación estándar → `datos-promedio.csv` |
+| 4 | `2creaPromediosDistGradosFormacion.py` | Promedia distribuciones de grado → `datos-promedio_grados.csv` |
+| 5 | `3creaImagenesPNG.py` | Genera imágenes de grafos e histogramas de distribución de grados |
+| 6 | `4creaGEXF.py` | Exporta grafos a formato GEXF (para Gephi con geoLayout) |
+| 7 | `5creaTablasFormacion.py` | Genera tablas CSV consolidadas en `Formacion/Medidas_estructurales/` |
 
-> **Nota:** Antes de ejecutar los pasos 3–5, configurar `NODE_SCALE` en `configVisualizacion.py`:
+> **Nota:** Antes de ejecutar los pasos 5–7, configurar `NODE_SCALE` en `configVisualizacion.py`:
 > - `NODE_SCALE = 1` para anillo ≈ 1500 nodos y malla ≈ 2500 nodos
 > - `NODE_SCALE = 20` para anillo ≈ 50 nodos y malla ≈ 64 nodos
 
