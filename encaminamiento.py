@@ -5,6 +5,11 @@ import networkx as nx
 
 class Encaminamiento:
 
+    def __init__(self):
+        self._coord_cache_grid = {}   # {nodeId: (x, y)}
+        self._coord_cache_ring = {}   # {nodeId: (x, y)}
+        self._sp_cache = {}           # {source: {dest: path}}
+
     #---ANILLO-------------------------------
 
     def distanciaAnillo(self,node1,node2,main):
@@ -15,13 +20,13 @@ class Encaminamiento:
         return d
 
     def getCoordinatesAnillo(self,nodeId,main):
-        #transformación de coordenadas polares a rectangulares:
-        angulo=math.radians((360/main.nodes)*nodeId)#la función math.radians() convierte los grados sexagesimales en radianes
-        x = 10*math.cos(angulo)#se asume que el anillo tiene radio 10
-        y = 10*math.sin(angulo)#se asume que el anillo tiene radio 10
-        coord = [x,y]
-        #print("soy",nodeId,"mis coordenadas son",coord)
-        return coord
+        if nodeId not in self._coord_cache_ring:
+            #transformación de coordenadas polares a rectangulares:
+            angulo=math.radians((360/main.nodes)*nodeId)
+            x = 10*math.cos(angulo)
+            y = 10*math.sin(angulo)
+            self._coord_cache_ring[nodeId] = (x,y)
+        return self._coord_cache_ring[nodeId]
 
     #---MALLA----------------------------------
 
@@ -32,10 +37,11 @@ class Encaminamiento:
         return d
 
     def getCoordinates(self,nodeId,main):
-        x = (nodeId-1)%main.rows
-        y = (nodeId-1)//main.columns
-        coord = [x,y]
-        return coord
+        if nodeId not in self._coord_cache_grid:
+            x = (nodeId-1)%main.rows
+            y = (nodeId-1)//main.columns
+            self._coord_cache_grid[nodeId] = (x,y)
+        return self._coord_cache_grid[nodeId]
 
     #---COMPASS ROUTING--------------------------
 
@@ -94,8 +100,13 @@ class Encaminamiento:
     #---SHORTEST PATH (DIJKSTRA)----------------
 
     def shortestPath(self,grafo,fuente,destino):
-        ruta = nx.shortest_path(grafo, source=fuente, target=destino, weight=None, method='dijkstra')
-        return ruta
+        if fuente not in self._sp_cache:
+            self._sp_cache[fuente] = dict(nx.single_source_shortest_path(grafo, fuente))
+        return list(self._sp_cache[fuente][destino])
+
+    def clearShortestPathCache(self):
+        """Limpia la caché de rutas más cortas (necesario entre ciclos cuando la topología cambia)."""
+        self._sp_cache.clear()
 
     #---RANDOM WALK-----------------------------
 

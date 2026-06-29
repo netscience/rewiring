@@ -134,4 +134,41 @@ if __name__ == "__main__":
 	new_package.diametro=nx.diameter(main.graph)
 	seed=Event("PIF-EXPLORACION", 0.0, main.coordinador,main.coordinador,new_package)
 	experiment.init(seed)
+	
+	import time
+	from pathlib import Path
+	
+	start_time = time.perf_counter()
 	experiment.run()
+	elapsed_time = time.perf_counter() - start_time
+	
+	total_mensajes = experiment.engine.total_events
+	event_counts = experiment.engine.event_counts
+	
+	event_types = [
+		"PIF-EXPLORACION",
+		"PACKAGE",
+		"ACK",
+		"PIF-NEGOCIACION",
+		"SOLICITUD-CONEXION",
+		"ACEPTO-CONEXION",
+		"DESCONEXION",
+		"DESCONEXION-RECIBIDA",
+		"RECHAZO-CONEXION",
+		"PIF-CONEXION"
+	]
+	
+	if len(sys.argv) > 1:
+		hoja_dir = Path(sys.argv[1]).parent
+	else:
+		hoja_dir = Path(".")
+		
+	metrics_file = hoja_dir / "metricas_rendimiento.csv"
+	with open(metrics_file, "w", encoding="utf-8") as mf:
+		header = ["Tiempo_Ejecucion_Segundos", "Mensajes_Intercambiados"] + event_types
+		mf.write(",".join(header) + "\n")
+		
+		row = [f"{elapsed_time:.6f}", str(total_mensajes)]
+		for et in event_types:
+			row.append(str(event_counts.get(et, 0)))
+		mf.write(",".join(row) + "\n")

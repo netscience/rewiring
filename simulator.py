@@ -2,45 +2,59 @@
 enabling the communication between processes, enforcing the causal order of the
 exchanged events. """
 
+import heapq
+
 #---------------------------------------------
 class Simulator:                           # Descends from "Object" (default)
-    """ Simulator attributes: "clock" & "agenda", 
-    contains constructor and getters in python3-style, as well as the 
-    methods "insertEvent()", "returnEvent()" & "isOn()". """
+	""" Simulator attributes: "clock" & "agenda", 
+	contains constructor and getters in python3-style, as well as the 
+	methods "insertEvent()", "returnEvent()" & "isOn()". """
 	
-    def __init__(self, lastmoment):
-        """ Builds an instance of "Simulator", sets the initial value of clock 
-        and inserts the extreme (fixed) positions of agenda. """
-        self.__clock = 0.0
-        self.__agenda = [[-1.0],[lastmoment+0.1]]
+	def __init__(self, lastmoment):
+		""" Builds an instance of "Simulator", sets the initial value of clock 
+		and uses a binary heap for the event agenda. A monotonic counter
+		ensures FIFO ordering for events at the same time. """
+		self.__clock = 0.0
+		self.__agenda = []       # heap of (time, counter, event)
+		self.__counter = 0       # monotonic counter for tie-breaking
+		self.__total_events = 0  # contador de mensajes/eventos totales
+		self.__event_counts = {} # diccionario {nombre_evento: cantidad}
 		
-    @property
-    def clock(self):
-        """ Invoke as x.clock, without "()". """
-        return self.__clock
+	@property
+	def clock(self):
+		""" Invoke as x.clock, without "()". """
+		return self.__clock
 
-    @property
-    def agenda(self):
-        """ Invoke as x.genda, without "()". """
-        return self.__agenda
-    
-    def insertEvent(self, event):
-        """ Inserts an event in the agenda (list) in ascending order, according 
-        to its attribute of time. The extrem values of agenda are fixed to avoid 
-        special cases. """
-        key=event.time
-        newitem = [key, event]
-        for i,item in enumerate(self.__agenda):
-            if key < item[0]: 
-                self.__agenda.insert(i,newitem)
-                break
-    
-    def returnEvent(self):
-        """ Returns the 2nd position of the agenda. Notice that this element or item
-         is, in turn, a list of 2 elements: key and event. """
-        item = self.__agenda.pop(1)
-        return item[1]
+	@property
+	def agenda(self):
+		""" Invoke as x.agenda, without "()". """
+		return self.__agenda
 
-    def isOn(self):
-        """ True, provided that there are more that 2 elements in the agenda. """
-        return len(self.__agenda)>2
+	@property
+	def total_events(self):
+		""" Devuelve la cantidad de eventos procesados (mensajes intercambiados). """
+		return self.__total_events
+
+	@property
+	def event_counts(self):
+		""" Devuelve la cantidad de eventos procesados agrupados por su nombre. """
+		return self.__event_counts
+	
+	def insertEvent(self, event):
+		""" Inserts an event in the agenda using a binary heap for O(log n)
+		insertion. The monotonic counter ensures FIFO ordering for events
+		at the same time, matching the original linear insertion behavior. """
+		self.__counter += 1
+		heapq.heappush(self.__agenda, (event.time, self.__counter, event))
+	
+	def returnEvent(self):
+		""" Returns and removes the event with the smallest time from the agenda. """
+		time, counter, event = heapq.heappop(self.__agenda)
+		self.__total_events += 1
+		event_name = event.name
+		self.__event_counts[event_name] = self.__event_counts.get(event_name, 0) + 1
+		return event
+
+	def isOn(self):
+		""" True, provided that there are events remaining in the agenda. """
+		return len(self.__agenda) > 0

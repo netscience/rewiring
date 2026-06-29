@@ -53,6 +53,40 @@ Todos los parámetros se definen en `configuracion.py`:
 | Enlaces dinámicos | `ENLACES_DINAMICOS` | `2` | Enlaces dinámicos por nodo |
 | Exploradores | `EXPLORADORES` | `6` | Paquetes exploradores por nodo y ciclo |
 | Máx. conexiones | `DIV_CONEXIONES` | `1` | Divisor del máximo de conexiones (nodos/DIV) |
+| Workers en paralelo | `NUM_WORKERS` | `4` | Número de procesos paralelos para ejecutar simulaciones |
+
+### Paralelismo y Selección de Workers
+
+El simulador ejecuta las configuraciones independientes de forma paralela para acelerar sustancialmente el tiempo total de procesamiento. El grado de paralelismo se controla con el parámetro `NUM_WORKERS` en `configuracion.py`.
+
+#### 1. Cómo identificar el número de núcleos (cores) en tu equipo
+
+Para saber cuántos núcleos lógicos tiene tu procesador, puedes ejecutar el siguiente comando según tu sistema operativo:
+
+* **macOS**:
+  Abre la Terminal y ejecuta:
+  ```bash
+  sysctl -n hw.ncpu
+  ```
+* **Linux**:
+  Abre la Terminal y ejecuta:
+  ```bash
+  nproc
+  # o alternativamente:
+  lscpu | grep "^CPU(s):"
+  ```
+* **Windows**:
+  Abre PowerShell y ejecuta:
+  ```powershell
+  (Get-WmiObject Win32_ComputerSystem).NumberOfLogicalProcessors
+  ```
+  *(También se puede ver abriendo el **Administrador de Tareas** -> pestaña **Rendimiento** -> sección **CPU** -> **Procesadores lógicos**).*
+
+#### 2. Criterios para configurar `NUM_WORKERS`
+
+* **Rendimiento Máximo:** Configura `NUM_WORKERS` como `N - 1` o `N - 2` (donde `N` es la cantidad de procesadores lógicos). Por ejemplo, si tienes 10 núcleos, selecciona `8` o `9` workers. Esto evitará que la computadora se congele y te permitirá seguir usándola con fluidez para navegar o editar código.
+* **Trabajo de Fondo:** Si requieres usar otros programas pesados en paralelo, utiliza `N / 2` o `2 * N / 3` (ej. 6 workers en un procesador de 10 núcleos).
+* **RAM y Escala de Red:** Cada worker mantiene en memoria las estructuras y caminos mínimos de NetworkX. Si trabajas con redes grandes (ej. 2500 nodos o más), supervisa el Monitor de Actividad o el Administrador de Tareas para verificar que el uso acumulado de memoria RAM no supere el límite físico de tu equipo.
 
 ### Ejecución del pipeline
 
@@ -83,6 +117,7 @@ ResultadosCN/Formacion/
 │   │   │   │   ├── config.py
 │   │   │   │   ├── 1/ ... 4/          ← ejecuciones
 │   │   │   │   │   ├── salida_x.txt
+│   │   │   │   │   ├── metricas_rendimiento.csv
 │   │   │   │   │   ├── datos-salida_x.txt
 │   │   │   │   │   ├── graph_test_*.adjlist
 │   │   │   │   │   └── hist_test_*.txt
@@ -99,7 +134,7 @@ ResultadosCN/Formacion/
     └── Medidas_estructurales_*.csv
 ```
 
-### Métricas extraídas
+### Métricas estructurales extraídas
 
 Para cada ciclo de reconexión, `extractData.py` genera:
 
@@ -110,6 +145,23 @@ Para cada ciclo de reconexión, `extractData.py` genera:
 | **Diámetro** | Diámetro del grafo |
 | **Componentes** | Número de componentes conexas |
 | **Orden** | Número de nodos |
+
+### Métricas de rendimiento (mensajes intercambiados)
+
+| Métrica | Descripción | Unidad |
+|---------|-------------|--------|
+| `Tiempo_Ejecucion_Segundos` | Tiempo total de ejecución de la simulación | segundos |
+| `Mensajes_Intercambiados` | Número total de mensajes intercambiados | entero |
+| `PIF-EXPLORACION` | Mensajes PIF enviados en fase de exploración | entero |
+| `PACKAGE` | Paquetes de datos enviados | entero |
+| `ACK` | Mensajes de reconocimiento enviados | entero |
+| `PIF-NEGOCIACION` | Mensajes PIF enviados en fase de negociación | entero |
+| `SOLICITUD-CONEXION` | Solicitudes de conexión enviadas | entero |
+| `ACEPTO-CONEXION` | Confirmaciones de conexión aceptadas | entero |
+| `DESCONEXION` | Solicitudes de desconexión iniciadas | entero |
+| `DESCONEXION-RECIBIDA` | Confirmaciones de desconexión recibidas | entero |
+| `RECHAZO-CONEXION` | Rechazos de conexión recibidos | entero |
+| `PIF-CONEXION` | Mensajes PIF enviados en fase de conexión | entero |
 
 ### Espacio de experimentos
 

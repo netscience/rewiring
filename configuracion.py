@@ -20,11 +20,15 @@ REGLAS=[1,2,3]
 # p.e., 1, 2, 4, 8, 16, etc. 
 LONG_ENLACES=[1,2,4]             
 #--------EJECUCION---------------
-CICLOS=5                   # Número de ciclos de reconexión
-EJECUCIONES = 4            # Número de ejecuciones por experimento   
+CICLOS=10                   # Número de ciclos de reconexión
+EJECUCIONES = 3            # Número de ejecuciones por experimento   
 #--------EXTRAS------------------
 ENLACES_DINAMICOS=2        # Número de enlaces dinámicos por nodo
-EXPLORADORES=6             # Número de paquetes exploradores por ciclo
+EXPLORADORES=20             # Número de paquetes exploradores por ciclo
 # Divisor del máximo número de conexiones permitidas 
 # máximo numero de conexiones permitidas=num_nodos/DIV_CONEXIONES
 DIV_CONEXIONES=1            
+#--------PARALELISMO--------------
+# Número de procesos paralelos para ejecutar simulaciones
+# Ajustar según el número de cores de la CPU
+NUM_WORKERS=8

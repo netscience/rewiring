@@ -33,10 +33,11 @@ class ComplexNetwork(Model):
         self.paquetes=[]#lista de paquetes exploradores enviados, servirá para buscar rutas hacia mis posibles candidatos a conexión
         self.paquetesRegreso=0#contador de paquetes exploradores que han regresado a mi, después de explorar la red
         self.enlacesDinamicos=[]#lista de enlaces dinámicos que tengo
+        self.enlacesDinamicosDict={}#diccionario para búsquedas O(1) de enlaces por id
         self.vecinosConectadosDinamicos=[]#lista de id´s de los nodos con los que estoy conectado mediante mis enlaces dinámicos
         self.f_n = {} #Diccionario de frecuencia de visita a los nodos que no son mis vecinos, mediante mis paquetes exploradores
         self.f_e = {} #Diccionario de frecuencia de uso de mis enlaces dinámicos
-        self.listaNodosSolicitados=[]#lista de id´s de nodos solicitados para conectarme con ellos en un ciclo en particular
+        self.listaNodosSolicitados=set()#lista de id´s de nodos solicitados para conectarme con ellos en un ciclo en particular
         self.numeroSolicitudes=0#número de solicitudes hechas por mi en un ciclo de recableado
         self.conexionesAceptadas=0#numero de conexiones que he aceptado en la simulación
         self.neighborsPendientes=[]#lista de vecinos que voy a agregar en la etapa de recableado, se da en los nodos destino (los que aceptan solicitudes)
@@ -179,8 +180,8 @@ class ComplexNetwork(Model):
                         break
                 nodos=self.f_n.keys()#obtengo las claves de mi diccionario de f_n, las cuales representan los nodos visitados
                 ruta = []
+                conjuntoVecinos=set(self.neighbors+self.vecinosConectadosDinamicos)
                 for i in range(2,len(event.package.rutaAuxiliar)):#recorro cada uno de los nodos de la ruta, excepto mi id y mi vecino directo
-                    conjuntoVecinos=self.neighbors+self.vecinosConectadosDinamicos
                     """NOTA: es necesario poner la condicion event.package.rutaAuxiliar[i] not in self.neighbors por que el algoritmo de encaminamiento
                         puede hacer que los paquetes pasen por mis vecinos directos, y no debo considerarlos en f_n"""
                     if(event.package.rutaAuxiliar[i] not in conjuntoVecinos):
@@ -281,7 +282,7 @@ class ComplexNetwork(Model):
                                 new_package.rutaAuxiliar=new_package.ruta[:]#copio la ruta en rutaAuxiliar
                                 del new_package.ruta[0]#elimino mi id de la ruta principal
                                 nextStep=new_package.ruta[0]
-                                self.listaNodosSolicitados.append(clave)
+                                self.listaNodosSolicitados.add(clave)
                                 self.numeroSolicitudes+=1
                                 del new_package.ruta[0]#elimino el id al que le voy a enviar el mensaje de la ruta principal
                                 new_package.idEnlace=enlace.idEnlace#agrego al paquete el id del enlace dinamico que esta haciendo la solicitud
@@ -308,11 +309,7 @@ class ComplexNetwork(Model):
                         clavesF_e=list(self.f_e.keys())#obtengo las claves del diccionario previamente ordenado de frecuencias de enlaces dinamicos, en forma de lista
                         if(self.f_e[clavesF_e[0]]<self.frecEnlace):#si la frecuencia de uso del enlace es menor que el umbral self.frecEnlace, entonces busco el recableado
                             #print("soy",self.id,"el enlace a reconectar es el que tiene id",clavesF_e[0])
-                            enlaceReconectar=None
-                            for enlace in self.enlacesDinamicos:
-                                if(enlace.idEnlace==clavesF_e[0]):
-                                    enlaceReconectar=enlace
-                                    break
+                            enlaceReconectar=self.enlacesDinamicosDict[clavesF_e[0]]
                             clave=-1
                             #selecciono al candidato a conexión
                             rule = Reglas(self.__regla,self.f_n, self.paquetes)
@@ -351,7 +348,7 @@ class ComplexNetwork(Model):
                                 nextStep=new_package.ruta[0]
                                 del new_package.ruta[0]#elimino el id al que le voy a enviar el mensaje de la ruta principal
                                 new_package.idEnlace=enlaceReconectar.idEnlace#agrego al paquete el id del enlace dinamico que esta haciendo la solicitud
-                                self.listaNodosSolicitados.append(nodoConexion)
+                                self.listaNodosSolicitados.add(nodoConexion)
                                 self.numeroSolicitudes+=1
                                 #envio la solicitud al nodo con el que me quiero conectar mediante la ruta de menor longitud encontrada previamente
                                 newevent = Event("SOLICITUD-CONEXION", event.time + 1.0, nextStep, self.id, new_package)            
@@ -429,11 +426,7 @@ class ComplexNetwork(Model):
                 #agrego a mi lista de solicitudes aprobadas el paquete recibido
                 self.solicitudesPendientes.append(event.package)
                 #busco el enlace que hizo la peticion
-                enlaceConexion=None
-                for enlace in self.enlacesDinamicos:
-                    if(enlace.idEnlace==event.package.idEnlace):
-                        enlaceConexion=enlace
-                        break
+                enlaceConexion=self.enlacesDinamicosDict[event.package.idEnlace]
                 #print("soy",self.id,"enlaceConexion=",enlaceConexion.idConectado,"mis vecinos son",self.neighbors,"vecinosConectadosDinamicos",self.vecinosConectadosDinamicos)        
                 if(enlaceConexion.idConectado!=-1):#si este es un recableado, envio DESCONEXION al nodo conectado mediante mi enlace dinamico para que me elimine de sus vecinos
                     self.numeroSolicitudes+=1
@@ -526,32 +519,30 @@ class ComplexNetwork(Model):
                     #ahora hago la conexión de mi enlace dinámico con el nodo que acepto la conexión
                     #busco mi enlace dinámico que hizo la solicitud
                     for package in self.solicitudesPendientes:
-                        for enlace in self.enlacesDinamicos:
-                            if(enlace.idEnlace==package.idEnlace):
-                                #una vez que ya encontre el enlace, establezco la conexión
-                                enlace.libre=False#el enlace ahora ya no esta libre
-                                if(enlace.idConectado!=-1):
-                                    self.vecinosConectadosDinamicos.remove(enlace.idConectado)
-                                    print("r ",self.id," ",enlace.idConectado," ",package.rutaAuxiliar[len(package.rutaAuxiliar)-1]," ",self.contadorCiclos)
-                                    #actualizo el grafo networkx de la simulacion:
-                                    #print("soy",self.id,"DESCONEXION mis vecinos en el grafo antes del cambio son",list(self.__main.graph.neighbors(self.id)))
-                                    #print("aristas antes del cambio:",list(self.__main.graph.edges()))
-                                    self.__main.graph.remove_edge(int(self.id),int(enlace.idConectado))
-                                    #print("soy",self.id,"DESCONEXION con",enlace.idConectado,"ahora mis vecinos en el grafo son",list(self.__main.graph.neighbors(self.id)))
-                                    #print("aristas despues del cambio:",list(self.__main.graph.edges()))
-                                else:
-                                    print("c ",self.id," ",-1," ",package.rutaAuxiliar[len(package.rutaAuxiliar)-1]," ",self.contadorCiclos)
-                                #actualizo el grafo networkx de la simulacion:
-                                #print("soy",self.id,"CONEXION mis vecinos en el grafo antes del cambio son",list(self.__main.graph.neighbors(self.id)))
-                                #print("aristas antes del cambio:",list(self.__main.graph.edges()))
-                                self.__main.graph.add_edge(int(self.id),int(package.rutaAuxiliar[len(package.rutaAuxiliar)-1]))
-                                #print("soy",self.id,"CONEXION con",package.rutaAuxiliar[len(package.rutaAuxiliar)-1],"ahora mis vecinos son",list(self.__main.graph.neighbors(self.id)))
-                                #print("aristas despues del cambio:",list(self.__main.graph.edges()))
-                                enlace.idConectado=package.rutaAuxiliar[len(package.rutaAuxiliar)-1]
-                                self.vecinosConectadosDinamicos.append(enlace.idConectado)
-                                #print("soy",self.id,"mi enlace numero",enlace.idEnlace,"ya esta libre=",enlace.libre,"y me conecta con",enlace.idConectado)
-                                #print("soy",self.id,"mis vecinos van asi:",self.neighbors+self.vecinosConectadosDinamicos)
-                                break
+                        enlace = self.enlacesDinamicosDict[package.idEnlace]
+                        #una vez que ya encontre el enlace, establezco la conexión
+                        enlace.libre=False#el enlace ahora ya no esta libre
+                        if(enlace.idConectado!=-1):
+                            self.vecinosConectadosDinamicos.remove(enlace.idConectado)
+                            print("r ",self.id," ",enlace.idConectado," ",package.rutaAuxiliar[len(package.rutaAuxiliar)-1]," ",self.contadorCiclos)
+                            #actualizo el grafo networkx de la simulacion:
+                            #print("soy",self.id,"DESCONEXION mis vecinos en el grafo antes del cambio son",list(self.__main.graph.neighbors(self.id)))
+                            #print("aristas antes del cambio:",list(self.__main.graph.edges()))
+                            self.__main.graph.remove_edge(int(self.id),int(enlace.idConectado))
+                            #print("soy",self.id,"DESCONEXION con",enlace.idConectado,"ahora mis vecinos en el grafo son",list(self.__main.graph.neighbors(self.id)))
+                            #print("aristas despues del cambio:",list(self.__main.graph.edges()))
+                        else:
+                            print("c ",self.id," ",-1," ",package.rutaAuxiliar[len(package.rutaAuxiliar)-1]," ",self.contadorCiclos)
+                        #actualizo el grafo networkx de la simulacion:
+                        #print("soy",self.id,"CONEXION mis vecinos en el grafo antes del cambio son",list(self.__main.graph.neighbors(self.id)))
+                        #print("aristas antes del cambio:",list(self.__main.graph.edges()))
+                        self.__main.graph.add_edge(int(self.id),int(package.rutaAuxiliar[len(package.rutaAuxiliar)-1]))
+                        #print("soy",self.id,"CONEXION con",package.rutaAuxiliar[len(package.rutaAuxiliar)-1],"ahora mis vecinos son",list(self.__main.graph.neighbors(self.id)))
+                        #print("aristas despues del cambio:",list(self.__main.graph.edges()))
+                        enlace.idConectado=package.rutaAuxiliar[len(package.rutaAuxiliar)-1]
+                        self.vecinosConectadosDinamicos.append(enlace.idConectado)
+                        #print("soy",self.id,"mi enlace numero",enlace.idEnlace,"ya esta libre=",enlace.libre,"y me conecta con",enlace.idConectado)
+                        #print("soy",self.id,"mis vecinos van asi:",self.neighbors+self.vecinosConectadosDinamicos)
 
                 #propago mi PIF-CONEXION
                 conjuntoVecinos=self.neighbors+self.vecinosConectadosDinamicos
@@ -600,6 +591,7 @@ class ComplexNetwork(Model):
             enlace=Enlace(i,self.__main.tamEnlace)#aqui se puede cambiar facilmente la longitud de cada enlace
             self.f_e[enlace.idEnlace]=0#inicializo la frecuencia de uso del enlace dinamico en cero
             self.enlacesDinamicos.append(enlace)
+            self.enlacesDinamicosDict[enlace.idEnlace]=enlace
 
     def reiniciaPIF(self):
         self.visited=False
@@ -619,3 +611,4 @@ class ComplexNetwork(Model):
         self.neighborsPendientes.clear()
         self.neighborsPendientesEliminacion.clear()
         self.solicitudesPendientes.clear()
+        self.__encaminamiento.clearShortestPathCache()
