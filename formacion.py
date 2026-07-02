@@ -7,7 +7,7 @@ from multiprocessing import Pool
 
 PYTHON_EXEC = "python"  # Si tu entorno ya responde a 'python'
 
-def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, ruteo):
+def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, ruteo, p, q):
     constantes = {
         #--------ANILLO------------------
         # Número de nodos del anillo. Colocar 0 si no se usa anillo
@@ -22,6 +22,8 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, rute
         "RED": tipo_red,                           
         # Algoritmo de encaminamiento: "CR", "RW", "SP"
         "ROUTING": ruteo, 
+        "P": p,
+        "Q": q,
         "REGLA": regla,
         # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
         "LONG_ENLACE": long_enlace,        
@@ -48,11 +50,11 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, rute
 
 
 def ejecutar_configuracion(args):
-    ruta, long_enlace, r, tipo_red, ruteo = args
+    ruta, long_enlace, r, tipo_red, ruteo, p, q = args
     print(f"\n>>> Iniciando configuración en: {ruta}")
     
     # Crea config.py en la ruta
-    generar_script_constantes(str(ruta) + "/config.py", long_enlace, r, tipo_red, ruteo)
+    generar_script_constantes(str(ruta) + "/config.py", long_enlace, r, tipo_red, ruteo, p ,q)
 
     for x in range(1, configuracion.EJECUCIONES + 1):
         hoja = f"{ruta}/{x}"
@@ -109,20 +111,40 @@ if __name__ == '__main__':
                     routing = "CR"
                 elif ruteo == "RANDOM-WALK":
                     routing = "RW" 
+                elif ruteo == "RW-DEGREE":
+                    routing = "RWD"
+                elif ruteo == "RW-INVERSE":
+                    routing = "RWI" 
+                elif ruteo == "RW-NODE2VEC":
+                    routing = "N2V"
                 elif ruteo == "SHORTEST-PATH":
                     routing = "SP"
                 else:
                     print(f" Algoritmo de ruteo desconocido, saltando: {ruteo}")
                     continue
-
+                
                 for long_enlace in configuracion.LONG_ENLACES:
-                    ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
-                    
-                    if not os.path.exists(ruta):
-                        print(f" Ruta no encontrada, saltando: {ruta}")
-                        continue
-                    
-                    tasks.append((ruta, long_enlace, r, tipo_red, ruteo))
+                    if ruteo == "RW-NODE2VEC":
+                        for pq in configuracion.PQ_NODE2VEC:
+                            p = pq[0]
+                            q = pq[1]
+                            pstr = str(p).replace('.',"_")
+                            qstr = str(q).replace('.',"_")
+                            ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}p{pstr}q{qstr}/D{long_enlace}"
+                        
+                            if not os.path.exists(ruta):
+                                print(f" Ruta no encontrada, saltando: {ruta}")
+                                continue
+                            
+                            tasks.append((ruta, long_enlace, r, tipo_red, ruteo, p, q))
+                    else:
+                        ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
+                        
+                        if not os.path.exists(ruta):
+                            print(f" Ruta no encontrada, saltando: {ruta}")
+                            continue
+                        
+                        tasks.append((ruta, long_enlace, r, tipo_red, ruteo, 0, 0))
 
     # Leer NUM_WORKERS configurado
     num_workers = getattr(configuracion, "NUM_WORKERS", 4)

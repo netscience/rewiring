@@ -114,6 +114,52 @@ class Encaminamiento:
         w=random.choice(vecinos)
         return w
 
+    def Random_Walk_Degree(self,identificador,vecinos,grafo):
+        """Caminata sesgada por grado.
+        P(u) = deg(u) / sum(deg(v) for v in vecinos)
+        Favorece saltar hacia nodos de mayor conectividad (hubs).
+        """
+        pesos = [grafo.degree(u) for u in vecinos]
+        total = sum(pesos)
+        if total == 0:
+            return random.choice(vecinos)
+        return random.choices(vecinos, weights=pesos, k=1)[0]
+
+    def Random_Walk_Inverse(self,identificador,vecinos,grafo):
+        """Caminata sesgada por grado inverso.
+        P(u) = (1/deg(u)) / sum(1/deg(v) for v in vecinos)
+        Favorece saltar hacia nodos de menor conectividad (periféricos).
+        """
+        pesos = [1.0 / grafo.degree(u) for u in vecinos]
+        total = sum(pesos)
+        if total == 0:
+            return random.choice(vecinos)
+        return random.choices(vecinos, weights=pesos, k=1)[0]
+
+    def Random_Walk_Node2Vec(self,identificador,vecinos,grafo,prev=None,p=1.0,q=1.0):
+        """Caminata node2vec.
+        Los parámetros p y q controlan el sesgo de retorno y de exploración:
+            alpha(x) = 1/p  si x == prev          (retorno al nodo anterior)
+                     = 1    si x es vecino de prev  (triángulo local / BFS)
+                     = 1/q  en otro caso            (exploración DFS)
+        p > 1 desincentiva volver atrás.
+        q < 1 favorece exploración hacia nodos lejanos (DFS).
+        q > 1 favorece exploración local (BFS).
+        """
+        if prev is None:
+            return random.choice(vecinos)
+        vecinos_prev = set(grafo.neighbors(prev))
+        pesos = []
+        for x in vecinos:
+            if x == prev:
+                alpha = 1.0 / p
+            elif x in vecinos_prev:
+                alpha = 1.0
+            else:
+                alpha = 1.0 / q
+            pesos.append(alpha)
+        return random.choices(vecinos, weights=pesos, k=1)[0]
+
     #---EXTRAS----------------------------------
 
     def generaDestino(self,identificador,main,vecinos):

@@ -43,6 +43,12 @@ for red in configuracion.RED:
                 routing = "CR"
             elif ruteo == "RANDOM-WALK":
                 routing = "RW" 
+            elif ruteo == "RW-DEGREE":
+                    routing = "RWD"
+            elif ruteo == "RW-INVERSE":
+                routing = "RWI" 
+            elif ruteo == "RW-NODE2VEC":
+                routing = "N2V"
             elif ruteo == "SHORTEST-PATH":
                 routing = "SP"
             else:
@@ -50,14 +56,29 @@ for red in configuracion.RED:
                 continue
 
             for long_enlace in configuracion.LONG_ENLACES:
-                ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
-                crear_arbol_directorios(ruta)
+                if ruteo == "RW-NODE2VEC":
+                    for pq in configuracion.PQ_NODE2VEC:
+                            p = pq[0]
+                            q = pq[1]
+                            pstr = str(p).replace('.',"_")
+                            qstr = str(q).replace('.',"_")
+                            ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}p{pstr}q{qstr}/D{long_enlace}"
+                            crear_arbol_directorios(ruta)        
+                            # Copiar directamente todos los archivos a esta ruta
+                            for archivo in archivos_simulador:
+                                if os.path.exists(archivo):
+                                    shutil.copy2(archivo, ruta)
+                                else:
+                                    print(f" Advertencia: no se encontró {archivo} en el directorio raíz.")
+                else:
+                    ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
+                    crear_arbol_directorios(ruta)
                 
-                # Copiar directamente todos los archivos a esta ruta
-                for archivo in archivos_simulador:
-                    if os.path.exists(archivo):
-                        shutil.copy2(archivo, ruta)
-                    else:
-                        print(f" Advertencia: no se encontró {archivo} en el directorio raíz.")
+                    # Copiar directamente todos los archivos a esta ruta
+                    for archivo in archivos_simulador:
+                        if os.path.exists(archivo):
+                            shutil.copy2(archivo, ruta)
+                        else:
+                            print(f" Advertencia: no se encontró {archivo} en el directorio raíz.")
 
 print("Copia de archivos del simulador a todos los directorios completada.")

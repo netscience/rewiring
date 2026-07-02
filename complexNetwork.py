@@ -14,14 +14,16 @@ class ComplexNetwork(Model):
     """La clase ComplexNetwork desciende de la clase Model e implementa los metodos init() y  
         receive()"que en la clase madre se definen como abstractos"""
 
-    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,algoritmoEncaminamiento,regla):#constructor de la clase ComplexNetwork
+    def __init__(self,main,numEnlacesDinamicos,maximasConexiones,num_paquetes,regla,algoritmoEncaminamiento,p,q):#constructor de la clase ComplexNetwork
         self.__main=main
         self.__numEnlacesDinamicos=numEnlacesDinamicos
         self.__maximoConexionesPermitidas=maximasConexiones
         self.__num_paquetes=num_paquetes
         self.__encaminamiento=Encaminamiento()
-        self.__algoritmoEncaminamiento=algoritmoEncaminamiento
         self.__regla=regla
+        self.__algoritmoEncaminamiento=algoritmoEncaminamiento
+        self.__p=p
+        self.__q=q
         
     def init(self):
         self.contadorCiclos=1#contador que indica el ciclo en el que se encuentra la simulación
@@ -77,10 +79,17 @@ class ComplexNetwork(Model):
                     nextStep = self.__encaminamiento.Compass_Routing(self.id,neighborsTodos,new_package.destino,self.__main)
                     #print("soy",self.id,"genero el paquete",self.paquetesRegreso,"que va a dirigido a",new_package.destino,"en el tiempo",(event.time+1.0),"lo mando hacia",nextStep)
                     new_package.ruta.append(self.id)#agrego a la ruta del paquete mi id 
-                elif(self.__algoritmoEncaminamiento=="RANDOM-WALK"):
+                elif(self.__algoritmoEncaminamiento in ("RANDOM-WALK","RW-DEGREE","RW-INVERSE","RW-NODE2VEC")):
                     new_package.distanciaMaxima=random.randint(2,self.diametroGrafo)#la distancia maxima esta comprendida entre [2,diametroGrafo]
-                    nextStep = self.__encaminamiento.Random_Walk(self.id,neighborsTodos)
-                    #print("soy",self.id,"genero el paquete",self.paquetesRegreso,"que va a distancia",new_package.distanciaMaxima,"en el tiempo",(event.time+1.0),"lo mando hacia",nextStep,"el diametro de la red es:",event.package.diametro) 
+                    if(self.__algoritmoEncaminamiento=="RANDOM-WALK"):
+                        nextStep = self.__encaminamiento.Random_Walk(self.id,neighborsTodos)
+                    elif(self.__algoritmoEncaminamiento=="RW-DEGREE"):
+                        nextStep = self.__encaminamiento.Random_Walk_Degree(self.id,neighborsTodos,self.__main.graph)
+                    elif(self.__algoritmoEncaminamiento=="RW-INVERSE"):
+                        nextStep = self.__encaminamiento.Random_Walk_Inverse(self.id,neighborsTodos,self.__main.graph)
+                    elif(self.__algoritmoEncaminamiento=="RW-NODE2VEC"):
+                        nextStep = self.__encaminamiento.Random_Walk_Node2Vec(self.id,neighborsTodos,self.__main.graph,prev=None,p=self.__p,q=self.__q)
+                    #print("soy",self.id,"genero el paquete",self.paquetesRegreso,"que va a distancia",new_package.distanciaMaxima,"en el tiempo",(event.time+1.0),"lo mando hacia",nextStep,"el diametro de la red es:",event.package.diametro)
                     new_package.ruta.append(self.id)#agrego a la ruta del paquete mi id
                 elif(self.__algoritmoEncaminamiento=="SHORTEST-PATH"):
                     new_package.destino=self.__encaminamiento.generaDestino(self.id,self.__main,neighborsTodos)
@@ -107,15 +116,12 @@ class ComplexNetwork(Model):
                     self.transmit(newevent)
 
         elif(event.name=="PACKAGE"):
-            if((event.package.distanciaMaxima > 1 and self.__algoritmoEncaminamiento=="RANDOM-WALK") or (event.package.destino!=self.id and self.__algoritmoEncaminamiento=="COMPASS-ROUTING")):
+            esRW = self.__algoritmoEncaminamiento in ("RANDOM-WALK","RW-DEGREE","RW-INVERSE","RW-NODE2VEC")
+            if((event.package.distanciaMaxima > 1 and esRW) or (event.package.destino!=self.id and self.__algoritmoEncaminamiento=="COMPASS-ROUTING")):
                 auxNeighbors=self.neighbors+self.vecinosConectadosDinamicos#Creo una copia de mi lista de vecinos
                 for n in event.package.ruta:#Descarto de la copia a todos los vecinos por los que ya paso el paquete
                     if n in auxNeighbors:
                         auxNeighbors.remove(n)
-                #if(self.__algoritmoEncaminamiento=="COMPASS-ROUTING"):
-                    #print("soy",self.id,"el paquete",event.package.idPaquete,"tiene origen:",event.package.sourceID,"destino:",event.package.destino,"auxNeighbors:",auxNeighbors,"vs",self.neighbors,"ruta",event.package.ruta)
-                #elif(self.__algoritmoEncaminamiento=="RANDOM-WALK"):
-                    #print("soy",self.id,"el paquete",event.package.idPaquete,"va a distancia",event.package.distanciaMaxima,"origen:",event.package.sourceID,",auxNeighbors:",auxNeighbors,"vs",self.neighbors,"ruta",event.package.ruta)
                 if(len(auxNeighbors)==0):#si ya no tengo a quien enviarle el paquete, por que son nodos ya visitados, mando ack, fase de BACKTRACK
                     event.package.ruta.append(self.id)#agrego a la ruta del paquete mi id
                     #print("soy",self.id,"ya no tengo a quien enviarle el paquete, ya llego a su destino, la ruta por la que paso es",event.package.ruta)
@@ -132,11 +138,19 @@ class ComplexNetwork(Model):
                     event.package.ruta.append(self.id)#agrego a la ruta del paquete mi id
                     if(self.__algoritmoEncaminamiento=="COMPASS-ROUTING"):
                         nextStep = self.__encaminamiento.Compass_Routing(self.id,auxNeighbors,event.package.destino,self.__main)
-                        #print("soy",self.id,"reenvio paquete",event.package.idPaquete,"proveniente de",event.package.sourceID,"a",nextStep,", su destino es",event.package.destino,"en el tiempo",(event.time+1.0),"ruta hasta ahora",event.package.ruta)
                     elif(self.__algoritmoEncaminamiento=="RANDOM-WALK"):
                         nextStep = self.__encaminamiento.Random_Walk(self.id,auxNeighbors)
                         event.package.distanciaMaxima-=1
-                        #print("soy",self.id,"reenvio paquete",event.package.idPaquete,"proveniente de",event.package.sourceID,"faltan",event.package.distanciaMaxima,"pasos, en el tiempo",(event.time+1.0),"lo mando hacia",nextStep,"ruta hasta ahora",event.package.ruta)   
+                    elif(self.__algoritmoEncaminamiento=="RW-DEGREE"):
+                        nextStep = self.__encaminamiento.Random_Walk_Degree(self.id,auxNeighbors,self.__main.graph)
+                        event.package.distanciaMaxima-=1
+                    elif(self.__algoritmoEncaminamiento=="RW-INVERSE"):
+                        nextStep = self.__encaminamiento.Random_Walk_Inverse(self.id,auxNeighbors,self.__main.graph)
+                        event.package.distanciaMaxima-=1
+                    elif(self.__algoritmoEncaminamiento=="RW-NODE2VEC"):
+                        prev = event.package.ruta[-2] if len(event.package.ruta) >= 2 else None
+                        nextStep = self.__encaminamiento.Random_Walk_Node2Vec(self.id,auxNeighbors,self.__main.graph,prev=prev,p=self.__p,q=self.__q)
+                        event.package.distanciaMaxima-=1
                     newevent = Event("PACKAGE", event.time + 1.0, nextStep, self.id, event.package)            
                     self.transmit(newevent)
             else:
@@ -162,7 +176,6 @@ class ComplexNetwork(Model):
                     event.package.ruta.pop(0)#elimino el primer elemento de la lista
                     newevent = Event("ACK", event.time + 1.0, nextStep, self.id, event.package)            
                     self.transmit(newevent)
-                    #print("soy",self.id,"mando ACK a",event.package.sourceID,"mediante",nextStep,"en el tiempo",newevent.time,"ruta faltante hasta ahora",newevent.package.ruta)
         
         elif(event.name=="ACK"):
             if(len(event.package.ruta) > 0):#si todavía falta recorrer nodos en la ruta    
@@ -200,10 +213,17 @@ class ComplexNetwork(Model):
                         nextStep = self.__encaminamiento.Compass_Routing(self.id,neighborsTodos,new_package.destino,self.__main)
                         #print("soy",self.id,"genero el paquete",self.paquetesRegreso,"que va a dirigido a",new_package.destino,"en el tiempo",(event.time+1.0),"lo mando hacia",nextStep)
                         new_package.ruta.append(self.id)#agrego a la ruta del paquete mi id 
-                    elif(self.__algoritmoEncaminamiento=="RANDOM-WALK"):
+                    elif(self.__algoritmoEncaminamiento in ("RANDOM-WALK","RW-DEGREE","RW-INVERSE","RW-NODE2VEC")):
                         new_package.distanciaMaxima=random.randint(2,self.diametroGrafo)#la distancia máxima esta comprendida entre [2,diametroGrafo]
-                        nextStep = self.__encaminamiento.Random_Walk(self.id,neighborsTodos)
-                        #print("soy",self.id,"genero el paquete",self.paquetesRegreso,"que va a distancia",new_package.distanciaMaxima,"en el tiempo",(event.time+1.0),"lo mando hacia",nextStep) 
+                        if(self.__algoritmoEncaminamiento=="RANDOM-WALK"):
+                            nextStep = self.__encaminamiento.Random_Walk(self.id,neighborsTodos)
+                        elif(self.__algoritmoEncaminamiento=="RW-DEGREE"):
+                            nextStep = self.__encaminamiento.Random_Walk_Degree(self.id,neighborsTodos,self.__main.graph)
+                        elif(self.__algoritmoEncaminamiento=="RW-INVERSE"):
+                            nextStep = self.__encaminamiento.Random_Walk_Inverse(self.id,neighborsTodos,self.__main.graph)
+                        elif(self.__algoritmoEncaminamiento=="RW-NODE2VEC"):
+                            nextStep = self.__encaminamiento.Random_Walk_Node2Vec(self.id,neighborsTodos,self.__main.graph,prev=None,p=self.__p,q=self.__q)
+                        #print("soy",self.id,"genero el paquete",self.paquetesRegreso,"que va a distancia",new_package.distanciaMaxima,"en el tiempo",(event.time+1.0),"lo mando hacia",nextStep)
                         new_package.ruta.append(self.id)#agrego a la ruta del paquete mi id
                     elif(self.__algoritmoEncaminamiento=="SHORTEST-PATH"):
                         new_package.destino=self.__encaminamiento.generaDestino(self.id,self.__main,neighborsTodos)
@@ -411,7 +431,6 @@ class ComplexNetwork(Model):
                     else:
                         newevent = Event("RECHAZO-CONEXION", event.time + 1.0, nextStep, self.id, event.package)            
                         self.transmit(newevent)
-                        #print("soy",self.id,"yo no te solicité, pero ya no tengo conexiones disponibles por lo que",newevent.name,"con",event.package.rutaAuxiliar[0],"ahora le mando mensaje por la ruta",event.package.ruta,"ahorita el mensaje va a",nextStep,"conexionesAceptadas",self.conexionesAceptadas)
 
         elif(event.name=="ACEPTO-CONEXION"):
             if(len(event.package.ruta)>0):#si el mensaje no viene para mi, simplemente lo reenvio
@@ -455,7 +474,6 @@ class ComplexNetwork(Model):
             #hago lo necesario para mandar el mensaje de contestacion
             newevent = Event("DESCONEXION-RECIBIDA", event.time + 1.0, event.source, self.id, None)            
             self.transmit(newevent)
-            #print("soy",self.id,"mando",newevent.name,"a",newevent.target,"en el tiempo",newevent.time)        
 
         elif(event.name=="DESCONEXION-RECIBIDA"):
             #print("soy",self.id,"ya llego",event.name,"que venia de",event.source,"en el tiempo",event.time)
@@ -580,11 +598,6 @@ class ComplexNetwork(Model):
                             newevent = Event("PIF-EXPLORACION", self.clock+1.0, self.id, self.id, new_package)
                             self.transmit(newevent)
                             self.contadorCiclos+=1
-                            #print("soy",self.id,"COORDINADOR inicio el ciclo numero",self.contadorCiclos,"arrancando el PIF-EXPLORACION")
-                        #else:
-                            #print("soy",self.id,"COORDINADOR detuve la simulacion por que el diametro ya es 2")
-                    #else:
-                        #print("soy",self.id,"COORDINADOR doy por terminada la simulacion")
         
     def creaLongitudEnlacesDinamicos(self):
         for i in range(self.__numEnlacesDinamicos):
