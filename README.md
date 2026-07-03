@@ -46,7 +46,8 @@ Todos los parámetros se definen en `configuracion.py`:
 | Topología inicial | `RED` | `["malla", "anillo"]` | Malla 2D o anillo circulante |
 | Orden de la topología | `ROWS`, `COLUMNS`, `NODOS_ANILLO` | 8×8, 64 | Número de nodos |
 | Regla de reconexión | `REGLAS` | `[1, 2, 3]` | R1, R2 o R3 |
-| Algoritmo de ruteo | `ROUTING` | `["SHORTEST-PATH", "COMPASS-ROUTING", "RANDOM-WALK"]` | SP, CR o RW |
+| Algoritmo de ruteo | `ROUTING` | `["SHORTEST-PATH", "COMPASS-ROUTING", "RANDOM-WALK", "RW-DEGREE", "RW-INVERSE", "RW-NODE2VEC"]` | SP, CR, RW, RWD, RWI o N2V |
+| Parámetros node2vec | `PQ_NODE2VEC` | lista de tuplas `(p, q)` | Pares de parámetros de retorno (`p`) y exploración (`q`) para `RW-NODE2VEC` |
 | Longitud de enlace | `LONG_ENLACES` | `[1, 2, 4]` | Divisores de la longitud máxima (D, D/2, D/4) |
 | Ciclos de reconexión | `CICLOS` | `5` | Número de ciclos por simulación |
 | Ejecuciones | `EJECUCIONES` | `4` | Repeticiones por configuración |
@@ -110,12 +111,12 @@ El flujo de trabajo se ejecuta en orden secuencial:
 
 ```
 ResultadosCN/Formacion/
-├── malla8x8/
+├── malla50x50/
 │   ├── R1/
 │   │   ├── CR/
-│   │   │   ├── D1/
+│   │   │   ├── D2/
 │   │   │   │   ├── config.py
-│   │   │   │   ├── 1/ ... 4/          ← ejecuciones
+│   │   │   │   ├── 1/ ... 10/         ← ejecuciones
 │   │   │   │   │   ├── salida_x.txt
 │   │   │   │   │   ├── metricas_rendimiento.csv
 │   │   │   │   │   ├── datos-salida_x.txt
@@ -123,9 +124,17 @@ ResultadosCN/Formacion/
 │   │   │   │   │   └── hist_test_*.txt
 │   │   │   │   ├── datos-promedio.csv
 │   │   │   │   └── datos-promedio_grados.csv
+│   │   │   ├── D4/ ...
+│   │   │   └── D8/ ...
+│   │   ├── RW/  ...                   ← Random Walk clásico
+│   │   ├── RWD/ ...                   ← Random Walk — Degree
+│   │   ├── RWI/ ...                   ← Random Walk — Inverse Degree
+│   │   ├── N2Vp0_25q0_25/            ← Node2Vec (p=0.25, q=0.25)
 │   │   │   ├── D2/ ...
 │   │   │   └── D4/ ...
-│   │   ├── RW/ ...
+│   │   ├── N2Vp0_25q0_5/ ...
+│   │   ├── ...                        ← una carpeta por cada par (p,q)
+│   │   ├── N2Vp2q2/ ...
 │   │   └── SP/ ...
 │   ├── R2/ ...
 │   └── R3/ ...
@@ -169,12 +178,15 @@ Con la configuración por defecto se generan:
 
 | Dimensión | Valores | Cantidad |
 |-----------|---------|----------|
-| Topologías | malla8x8, anillo64 | 2 |
+| Topologías | malla50x50 | 1 |
 | Reglas | R1, R2, R3 | 3 |
-| Ruteo | SP, CR, RW | 3 |
-| Long. enlace | D1, D2, D4 | 3 |
-| Ejecuciones | 1–4 | 4 |
-| **Total** | | **216 simulaciones** |
+| Ruteo base | RWD, RWI | 2 |
+| Ruteo node2vec | N2V × 16 combinaciones (p,q) | 16 |
+| Long. enlace | D2, D4, D8, D16, D32 | 5 |
+| Ejecuciones | 1–10 | 10 |
+| **Total** | **(2 + 16) × 3 × 5 × 10** | **2 700 simulaciones** |
+
+> **Nota:** Para agregar los algoritmos clásicos (`SP`, `CR`, `RW`) simplemente inclúyelos en la lista `ROUTING` de `configuracion.py`.
 
 ---
 
@@ -266,7 +278,7 @@ Cada ciclo de simulación ejecuta 3 fases coordinadas mediante **PIF (Propagatio
 
 ### Fase 1: Exploración (`PIF-EXPLORACION`)
 - Cada nodo envía `N` **paquetes exploradores** a la red
-- Los paquetes viajan usando uno de los 3 algoritmos de ruteo
+- Los paquetes viajan usando uno de los **6 algoritmos de ruteo** disponibles
 - Al regresar (vía `ACK`), se actualizan:
   - `f_n`: frecuencia de visita a nodos no-vecinos
   - `f_e`: frecuencia de uso de enlaces dinámicos
@@ -291,6 +303,36 @@ Cada ciclo de simulación ejecuta 3 fases coordinadas mediante **PIF (Propagatio
 | Compass Routing | `CR` | Reenvía al vecino con menor ángulo hacia el destino |
 | Shortest Path | `SP` | Calcula ruta más corta vía Dijkstra (usa visión global) |
 | Random Walk | `RW` | Camina aleatoriamente hasta `distanciaMaxima` pasos |
+| Random Walk — Degree | `RWD` | Caminata sesgada por grado: P(u) ∝ deg(u). Favorece saltar hacia nodos de alta conectividad (hubs) |
+| Random Walk — Inverse Degree | `RWI` | Caminata sesgada por grado inverso: P(u) ∝ 1/deg(u). Favorece nodos periféricos de baja conectividad |
+| Random Walk — Node2Vec | `N2V` | Caminata con sesgo de retorno (`p`) y exploración (`q`). `q < 1` favorece DFS (exploración lejana); `q > 1` favorece BFS (exploración local). Configurado mediante `PQ_NODE2VEC` |
+
+> Los algoritmos **RWD**, **RWI** y **N2V** se basan en el análisis comparativo de estrategias de caminata aleatoria presentado en:
+>
+> Vital Jr., A., Silva, F. N., & Amancio, D. R. (2024). **Comparing random walks in graph embedding and link prediction**. *PLOS ONE*, 19(11), e0312863. https://doi.org/10.1371/journal.pone.0312863
+
+#### Configuración de parámetros node2vec
+
+Cuando `ROUTING` incluye `"RW-NODE2VEC"`, se deben definir las combinaciones de parámetros en `PQ_NODE2VEC`:
+
+```python
+# configuracion.py
+PQ_NODE2VEC = [
+    (0.25, 0.25), (0.25, 0.5), (0.25, 1), (0.25, 2),
+    (0.5,  0.25), (0.5,  0.5), (0.5,  1), (0.5,  2),
+    (1,    0.25), (1,    0.5), (1,    1), (1,    2),
+    (2,    0.25), (2,    0.5), (2,    1), (2,    2),
+]
+```
+
+| Parámetro | Efecto |
+|-----------|--------|
+| `p < 1` | Incentiva el retorno al nodo anterior (exploración local) |
+| `p > 1` | Desincentiva el retorno (evita dar la vuelta) |
+| `q < 1` | Favorece exploración hacia nodos lejanos (DFS) |
+| `q > 1` | Favorece exploración de la vecindad inmediata (BFS) |
+
+Cada combinación `(p, q)` genera una subdirectorio independiente con la nomenclatura `N2Vp{p}q{q}/D{long}/`.
 
 ### Reglas de recableado
 
@@ -374,9 +416,9 @@ sequenceDiagram
     
     alt COMPASS-ROUTING
         C->>C: generaDestino() + Compass_Routing()
-    else RANDOM-WALK
+    else RANDOM-WALK / RW-DEGREE / RW-INVERSE / RW-NODE2VEC
         C->>C: distanciaMaxima = random(2, diámetro)
-        C->>C: Random_Walk()
+        C->>C: Random_Walk() / Random_Walk_Degree() / Random_Walk_Inverse() / Random_Walk_Node2Vec(p,q)
     else SHORTEST-PATH
         C->>C: generaDestino() + shortestPath()
     end
@@ -622,3 +664,31 @@ sequenceDiagram
     S5->>FS: Consolida medidas estructurales
     S5->>FS: → Medidas_estructurales/*.csv
 ```
+
+---
+
+## VI. Referencias
+
+### Algoritmos de encaminamiento
+
+- Kranakis, E., Singh, H., & Urrutia, J. (1999). **Compass routing on geometric networks**. In *Proceedings of the 11th Canadian Conference on Computational Geometry (CCCG '99)*, pp. 51–54. Vancouver, BC, Canada. http://www.cccg.ca/proceedings/1999/c46.pdf
+
+  > Artículo original que define el algoritmo **Compass Routing** implementado en la fase de exploración: el paquete siempre avanza hacia el vecino cuya dirección minimiza el ángulo respecto al destino.
+
+- Grover, A., & Leskovec, J. (2016). **node2vec: Scalable feature learning for networks**. In *Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining (KDD '16)*, pp. 855–864. https://doi.org/10.1145/2939672.2939754 · Preprint: https://arxiv.org/abs/1607.00653
+
+  > Artículo original que define el algoritmo **node2vec**: una caminata aleatoria sesgada por dos parámetros `p` (retorno) y `q` (exploración) que interpola entre búsqueda en anchura (BFS) y en profundidad (DFS). Es la base del algoritmo `RW-NODE2VEC` implementado en la fase de exploración.
+
+- Vital Jr., A., Silva, F. N., & Amancio, D. R. (2024). **Comparing random walks in graph embedding and link prediction**. *PLOS ONE*, 19(11), e0312863. https://doi.org/10.1371/journal.pone.0312863
+
+  > Análisis comparativo de estrategias de caminata aleatoria —incluyendo node2vec, degree-biased e inverse degree-biased— que fundamenta la selección de los algoritmos **RW-DEGREE**, **RW-INVERSE** y **RW-NODE2VEC** implementados en la fase de exploración.
+
+### Publicaciones que utilizan este simulador
+
+- López Chavira, M. A., & Marcelín-Jiménez, R. (2017). **Distributed rewiring model for complex networking: The effect of local rewiring rules on final structural properties**. *PLOS ONE*, 12(11), e0187538. https://doi.org/10.1371/journal.pone.0187538
+
+  > Primera publicación que introduce el modelo distribuido de reconexión implementado en este simulador. Se analizan las reglas de reconexión local (R1, R2, R3) y su efecto en propiedades estructurales globales como el coeficiente de agrupamiento y el diámetro.
+
+- López-Chavira, M. A., Aguirre-Guerrero, D., Marcelín-Jiménez, R., Vásquez-Toledo, L. A., & Bernal-Jaquez, R. (2024). **A distributed geometric rewiring model**. *Scientific Reports*, 14, 11152. https://doi.org/10.1038/s41598-024-61695-y
+
+  > Extensión del modelo que incorpora restricciones geométricas a la reconexión mediante el parámetro de longitud de enlace (`LONG_ENLACE`). Se demuestra que limitar la distancia máxima del enlace dinámico permite obtener topologías con propiedades de mundo pequeño preservando la localidad geográfica.

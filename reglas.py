@@ -37,20 +37,3 @@ class Reglas:
         probabilidades=probabilidades/np.sum(probabilidades)
         clave=np.random.choice(llaves,p=probabilidades)
         return clave
- 
-        long = len(self.vector_distancia)
-        popularidad, distancia = self.matrices(long)
-        self.popularidad = popularidad
-        self.distancia = distancia
-        probabilidad=self.nodos_seleccionados(popularidad, distancia)
-        if len(probabilidad)==0:
-            return -1
-        probabilidades = np.array(list(probabilidad.values()), dtype=float)
-        suma = np.sum(probabilidades)
-        probabilidades = probabilidades/suma
-        probabilidad_normalizada = dict(zip(probabilidad.keys(), probabilidades))
-        #Elegir un nodo candidato
-        nodos = list(probabilidad_normalizada.keys())
-        proba = list(probabilidad_normalizada.values())
-        candidato = np.random.choice(nodos, p=proba)
-        return candidato
