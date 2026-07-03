@@ -7,7 +7,7 @@ from multiprocessing import Pool
 
 PYTHON_EXEC = "python"  # Si tu entorno ya responde a 'python'
 
-def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, ruteo, p, q):
+def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, ruteo, p, q, alpha, vect_popularidad, vect_distancia):
     constantes = {
         #--------ANILLO------------------
         # Número de nodos del anillo. Colocar 0 si no se usa anillo
@@ -25,6 +25,9 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, rute
         "P": p,
         "Q": q,
         "REGLA": regla,
+        "ALPHA": alpha,
+        "VECTOR_POPULARIDAD": vect_popularidad,
+        "VECTOR_DISTANCIA": vect_distancia,
         # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
         "LONG_ENLACE": long_enlace,        
         #--------EJECUCION---------------
@@ -50,11 +53,11 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, rute
 
 
 def ejecutar_configuracion(args):
-    ruta, long_enlace, r, tipo_red, ruteo, p, q = args
+    ruta, long_enlace, r, tipo_red, ruteo, p, q, alpha, vect_popularidad, vect_distancia = args
     print(f"\n>>> Iniciando configuración en: {ruta}")
     
     # Crea config.py en la ruta
-    generar_script_constantes(str(ruta) + "/config.py", long_enlace, r, tipo_red, ruteo, p ,q)
+    generar_script_constantes(str(ruta) + "/config.py", long_enlace, r, tipo_red, ruteo, p ,q, alpha, vect_popularidad, vect_distancia)
 
     for x in range(1, configuracion.EJECUCIONES + 1):
         hoja = f"{ruta}/{x}"
@@ -135,16 +138,20 @@ if __name__ == '__main__':
                             if not os.path.exists(ruta):
                                 print(f" Ruta no encontrada, saltando: {ruta}")
                                 continue
-                            
-                            tasks.append((ruta, long_enlace, r, tipo_red, ruteo, p, q))
+                            if r==4:
+                                tasks.append((ruta, long_enlace, r, tipo_red, ruteo, p, q, configuracion.ALPHA, configuracion.VECTOR_POPULARIDAD, configuracion.VECTOR_DISTANCIA))
+                            else:
+                                tasks.append((ruta, long_enlace, r, tipo_red, ruteo, p, q, 0, 0, 0))
                     else:
                         ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
                         
                         if not os.path.exists(ruta):
                             print(f" Ruta no encontrada, saltando: {ruta}")
                             continue
-                        
-                        tasks.append((ruta, long_enlace, r, tipo_red, ruteo, 0, 0))
+                        if r == 4:
+                            tasks.append((ruta, long_enlace, r, tipo_red, ruteo, 0, 0, configuracion.ALPHA, configuracion.VECTOR_POPULARIDAD, configuracion.VECTOR_DISTANCIA))
+                        else:
+                            tasks.append((ruta, long_enlace, r, tipo_red, ruteo, 0, 0, 0, 0, 0))
 
     # Leer NUM_WORKERS configurado
     num_workers = getattr(configuracion, "NUM_WORKERS", 4)

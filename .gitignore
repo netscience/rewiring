@@ -3,6 +3,7 @@
 __pycache__/
 *.pyc
 *.venv
+venv/
 *.dist
 *.docx
 *.DS_Store

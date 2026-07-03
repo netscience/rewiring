@@ -45,7 +45,7 @@ Todos los parámetros se definen en `configuracion.py`:
 |-----------|----------|-------------------|-------------|
 | Topología inicial | `RED` | `["malla", "anillo"]` | Malla 2D o anillo circulante |
 | Orden de la topología | `ROWS`, `COLUMNS`, `NODOS_ANILLO` | 8×8, 64 | Número de nodos |
-| Regla de reconexión | `REGLAS` | `[1, 2, 3]` | R1, R2 o R3 |
+| Regla de reconexión | `REGLAS` | `[1, 2, 3, 4]` | R1, R2, R3, R4 |
 | Algoritmo de ruteo | `ROUTING` | `["SHORTEST-PATH", "COMPASS-ROUTING", "RANDOM-WALK", "RW-DEGREE", "RW-INVERSE", "RW-NODE2VEC"]` | SP, CR, RW, RWD, RWI o N2V |
 | Parámetros node2vec | `PQ_NODE2VEC` | lista de tuplas `(p, q)` | Pares de parámetros de retorno (`p`) y exploración (`q`) para `RW-NODE2VEC` |
 | Longitud de enlace | `LONG_ENLACES` | `[1, 2, 4]` | Divisores de la longitud máxima (D, D/2, D/4) |
