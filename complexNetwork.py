@@ -61,6 +61,7 @@ class ComplexNetwork(Model):
         #print("soy",self.id,"recibo",event.name,"de",event.source,"en el tiempo",event.time)
         
         #PIF fase de EXPLORACION-------------------------------
+        #PIF-EXPLORACION: Es el mensaje semilla para que se incie la fase de exploración
         if(event.name=="PIF-EXPLORACION"):
             self.count-=1
             if(self.visited==False):
@@ -123,9 +124,10 @@ class ComplexNetwork(Model):
             esRW = self.__algoritmoEncaminamiento in ("RANDOM-WALK","RW-DEGREE","RW-INVERSE","RW-NODE2VEC")
             if((event.package.distanciaMaxima > 1 and esRW) or (event.package.destino!=self.id and self.__algoritmoEncaminamiento=="COMPASS-ROUTING")):
                 auxNeighbors=self.neighbors+self.vecinosConectadosDinamicos#Creo una copia de mi lista de vecinos
-                for n in event.package.ruta:#Descarto de la copia a todos los vecinos por los que ya paso el paquete
-                    if n in auxNeighbors:
-                        auxNeighbors.remove(n)
+                #Descarto de la copia a todos los vecinos por los que ya paso el paquete
+                #for n in event.package.ruta:
+                #    if n in auxNeighbors:
+                #        auxNeighbors.remove(n)
                 if(len(auxNeighbors)==0):#si ya no tengo a quien enviarle el paquete, por que son nodos ya visitados, mando ack, fase de BACKTRACK
                     event.package.ruta.append(self.id)#agrego a la ruta del paquete mi id
                     #print("soy",self.id,"ya no tengo a quien enviarle el paquete, ya llego a su destino, la ruta por la que paso es",event.package.ruta)
