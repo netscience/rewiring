@@ -124,10 +124,12 @@ class ComplexNetwork(Model):
             esRW = self.__algoritmoEncaminamiento in ("RANDOM-WALK","RW-DEGREE","RW-INVERSE","RW-NODE2VEC")
             if((event.package.distanciaMaxima > 1 and esRW) or (event.package.destino!=self.id and self.__algoritmoEncaminamiento=="COMPASS-ROUTING")):
                 auxNeighbors=self.neighbors+self.vecinosConectadosDinamicos#Creo una copia de mi lista de vecinos
-                #Descarto de la copia a todos los vecinos por los que ya paso el paquete
-                #for n in event.package.ruta:
-                #    if n in auxNeighbors:
-                #        auxNeighbors.remove(n)
+                #Solo en COMPASS-ROUTING descarto los vecinos por los que ya pasó el paquete (evita ciclos del ruteo greedy).
+                #Las caminatas aleatorias (RW, RWD, RWI, N2V) sí pueden repetir nodos, lo que permite que el parámetro p de node2vec tenga efecto.
+                if(self.__algoritmoEncaminamiento=="COMPASS-ROUTING"):
+                    for n in event.package.ruta:
+                        if n in auxNeighbors:
+                            auxNeighbors.remove(n)
                 if(len(auxNeighbors)==0):#si ya no tengo a quien enviarle el paquete, por que son nodos ya visitados, mando ack, fase de BACKTRACK
                     event.package.ruta.append(self.id)#agrego a la ruta del paquete mi id
                     #print("soy",self.id,"ya no tengo a quien enviarle el paquete, ya llego a su destino, la ruta por la que paso es",event.package.ruta)
@@ -203,7 +205,8 @@ class ComplexNetwork(Model):
                 for i in range(2,len(event.package.rutaAuxiliar)):#recorro cada uno de los nodos de la ruta, excepto mi id y mi vecino directo
                     """NOTA: es necesario poner la condicion event.package.rutaAuxiliar[i] not in self.neighbors por que el algoritmo de encaminamiento
                         puede hacer que los paquetes pasen por mis vecinos directos, y no debo considerarlos en f_n"""
-                    if(event.package.rutaAuxiliar[i] not in conjuntoVecinos):
+                    #Excluyo también mi propio id: una caminata que repite nodos puede regresar a su origen
+                    if(event.package.rutaAuxiliar[i] not in conjuntoVecinos and event.package.rutaAuxiliar[i]!=self.id):
                         ruta.append(event.package.rutaAuxiliar[i])
                         if(event.package.rutaAuxiliar[i] not in nodos):#si el nodo no está en las claves, lo agrego con valor 1
                             self.f_n[event.package.rutaAuxiliar[i]]=1
@@ -276,10 +279,14 @@ class ComplexNetwork(Model):
                     for enlace in self.enlacesDinamicos:#recorro mi lista de enlaces dinámicos en busca de enlaces libres
                         if(enlace.libre==True):#si el enlace en cuestión está libre, mando solicitudes de CABLEADO
                             hayEnlacesLibres=True
+                            if(len(self.f_n)==0):#ya no quedan candidatos (se eliminaron al atender enlaces anteriores)
+                                break
                             clave=-1
                             #selecciono al candidato a conexión
                             rule = Reglas(self.__regla,self.f_n, self.__alpha, self.__vect_popularidad, self.__vect_distancia, self.matrizRutas)
                             clave = rule.seleccionar_candidato()
+                            if(clave==-1 or clave not in self.f_n):#R4 puede no encontrar candidato
+                                continue
                                 
                             distancia=-1
                             if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
@@ -342,15 +349,18 @@ class ComplexNetwork(Model):
                             #selecciono al candidato a conexión
                             rule = Reglas(self.__regla,self.f_n, self.__alpha, self.__vect_popularidad, self.__vect_distancia, self.matrizRutas)
                             clave = rule.seleccionar_candidato()   
+                            if(clave==-1 or clave not in self.f_n):#R4 puede no encontrar candidato
+                                clave=None
                                     
                             nodoConexion=-1
                             #reviso si se puede hacer el recableado:
                             distancia=-1
-                            if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
-                                distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
-                            else:#si estoy trabajando en un anillo:
-                                distancia=self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main)
-                            if(self.f_n[clave]>=self.frecNodo and distancia<=enlaceReconectar.longitud):
+                            if(clave is not None):
+                                if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
+                                    distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
+                                else:#si estoy trabajando en un anillo:
+                                    distancia=self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main)
+                            if(clave is not None and self.f_n[clave]>=self.frecNodo and distancia<=enlaceReconectar.longitud):
                                 nodoConexion=clave
                             if(nodoConexion!=-1):
                                 #print("soy",self.id,"elegi a",nodoConexion,"como mi candidato a CONEXION")
