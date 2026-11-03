@@ -12,9 +12,9 @@ ROWS=8                      # Filas de la malla. Colocar 0 si no se usa malla
 COLUMNS=8                   # Columnas de la malla
 #-------- Configuración de los experimentos de Reconexión -------------
 # Estos parámetros se deben definir como lista aunque contengan un solo valor
-RED=["malla"]  # Tipo de red: "malla", "anillo"
+RED=["malla","anillo"]  # Tipo de red: "malla", "anillo"
 # Algoritmo de ruteo: "SHORTEST-PATH", "COMPASS-ROUTING", "RANDOM-WALK", "RW-DEGREE", "RW-INVERSE", "RW-NODE2VEC"
-ROUTING=["RANDOM-WALK"]               
+ROUTING=["SHORTEST-PATH", "COMPASS-ROUTING", "RANDOM-WALK", "RW-DEGREE", "RW-INVERSE", "RW-NODE2VEC"]               
 # Parámetros para Node2Vec
 PQ_NODE2VEC = [
     (0.25,0.25), (0.25,0.5), (0.25,1), (0.25,2),
@@ -24,7 +24,7 @@ PQ_NODE2VEC = [
     ]
 
 # Reglas de reconexión
-REGLAS=[1] #1,2,3,4
+REGLAS=[1,2,3,4] #1,2,3,4
 # Parámetros de R4
 ALPHA = 0.3 # Balancea la popularidad y la distancia
 # Ambos vectores deben ser de igual longitud
@@ -35,7 +35,7 @@ VECTOR_DISTANCIA = [0,1,0,1,1,0,1,1]
 # Divisor de la longitud de enlace dinámico.
 # Se recomendan valores que sean potencia de 2, 
 # p.e., 1, 2, 4, 8, 16, etc. 
-LONG_ENLACES=[1]             
+LONG_ENLACES=[1,2,4]             
 #--------EJECUCION---------------
 # Semilla base para reproducir los experimentos. Si es None, cada corrida es
 # aleatoria (como antes). Si es un entero, cada corrida recibe una semilla

@@ -6,15 +6,16 @@ Además de construir el grafo, cada red define la geometría de sus nodos
 (coordenadas y distancia), que usan Compass Routing y la restricción de
 longitud de los enlaces dinámicos.
 
-Las clases reciben un módulo de configuración (`configuracion` desde los scripts
-de experimentos o `config` desde main.py), por lo que no dependen de ninguno.
+Las clases reciben un objeto con sus parámetros como atributos (el módulo
+`configuracion` desde los scripts de experimentos, o la geometría de un
+`parametros.Parametros` desde ejecutar.py), por lo que no dependen de ninguno.
 
 Para agregar un nuevo tipo de red:
-  1. Crear una subclase de `Red` definiendo CLAVE, nombre(), construir(),
-     longitud_maxima() y _calcular_coordenadas().
+  1. Crear una subclase de `Red` definiendo CLAVE, PARAMETROS, nombre(),
+     construir(), longitud_maxima() y _calcular_coordenadas().
   2. Registrarla en `REDES` (al final de este archivo).
-  3. Agregar sus parámetros en configuracion.py y escribirlos en config.py
-     desde formacion.py (generar_script_constantes).
+  3. Agregar sus parámetros en configuracion.py. formacion.py los copia a
+     parametros.json de cada corrida usando PARAMETROS.
 """
 
 import math
@@ -24,7 +25,8 @@ import networkx as nx
 class Red:
     """Clase base para todos los tipos de red."""
 
-    CLAVE = None   # Identificador de la red: se usa en configuracion.RED y config.RED (p.e. "malla")
+    CLAVE = None   # Identificador de la red: se usa en configuracion.RED y en parametros.json (p.e. "malla")
+    PARAMETROS = ()  # Nombres de los parámetros de configuracion.py que definen la red (p.e. ("ROWS", "COLUMNS"))
 
     def __init__(self, cfg):
         self.cfg = cfg
@@ -72,6 +74,7 @@ class Red:
 
 class Malla(Red):
     CLAVE = "malla"
+    PARAMETROS = ("ROWS", "COLUMNS")
 
     def nombre(self):
         return f"malla{self.cfg.ROWS}x{self.cfg.COLUMNS}"
@@ -96,6 +99,7 @@ class Malla(Red):
 
 class Anillo(Red):
     CLAVE = "anillo"
+    PARAMETROS = ("NODOS_ANILLO",)
     RADIO = 10               # Radio del anillo en unidades
     DIAMETRO = 2 * RADIO
 

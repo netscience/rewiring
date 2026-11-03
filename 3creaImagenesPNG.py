@@ -1,6 +1,11 @@
 
 import os
 import networkx as nx
+import matplotlib
+# Solo se guardan archivos PNG: el backend Agg no abre ventanas. Con el backend
+# por omisión de macOS cada figura crea una ventana nativa (las del anillo son de
+# 30x30 pulgadas a 200 dpi) y el script parece congelado.
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 import math
@@ -107,6 +112,7 @@ def draw_graph_ring(graphFile,nodes,ruta,file):
 	clb.ax.tick_params(labelsize=12)
 	plt.savefig(ruta+"/img_"+file+".png", dpi=50)
 
+corridas = 0  # número de corridas procesadas (para mostrar el avance)
 for nombre_directorio, subdirectorios, ficheros in os.walk(configuracion.RESULTADOS_DIR):#recorro recursivamente un directorio
 	ultima=nombre_directorio[len(nombre_directorio)-1]
 	penultima=nombre_directorio[len(nombre_directorio)-2]
@@ -119,6 +125,9 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(configuracion.RESULTA
 		lineasPrimero = primero.readlines()
 		primero.close()
 		ciclo1,AVCL,components,diam,APL,order = lineasPrimero[len(lineasPrimero)-1].split("\t")
+		corridas += 1
+		if corridas % 50 == 0:
+			print(f" {corridas} corridas con imágenes...", flush=True)
 		if "malla" in nombre_directorio:
 			draw_graph_grid(nombre_directorio+"/graph_test_"+ciclo1+".adjlist",configuracion.COLUMNS,nombre_directorio,"graph_test_"+ciclo1)
 			plt.close()
@@ -130,3 +139,5 @@ for nombre_directorio, subdirectorios, ficheros in os.walk(configuracion.RESULTA
 			plt.close()
 			creaHistogramaDistGrados(nombre_directorio+"/hist_test_"+ciclo1+".txt",configuracion.NODOS_ANILLO,nombre_directorio,"hist_test_"+ciclo1)
 			plt.close()
+
+print(f"Imágenes creadas para {corridas} corridas.")

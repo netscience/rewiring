@@ -4,7 +4,10 @@ import configuracion
 
 for nombre_directorio, directorios, ficheros in os.walk(configuracion.RESULTADOS_DIR):#recorro recursivamente un directorio
 	CANTIDADES=[]
-	if ("1" in directorios and "2" in directorios and "3" in directorios):
+	# Carpeta de una configuración: sus subcarpetas son las ejecuciones 1, 2, ..., n (n >= 1)
+	if '__pycache__' in directorios:
+		directorios.remove('__pycache__')
+	if directorios and all(d.isdigit() for d in directorios) and sorted(int(d) for d in directorios) == list(range(1, len(directorios) + 1)):
 		if '__pycache__' in directorios:
 			directorios.remove('__pycache__')
 		for contador,direc in enumerate(directorios):

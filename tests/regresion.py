@@ -13,12 +13,16 @@ Uso (desde la raíz del repositorio):
                                             # (p.e. una versión anterior; añadir
                                             # --red-numerica si usa RED = 1 o 3)
 
-La semilla se fija desde fuera de main.py, de modo que la prueba también sirve
-para versiones del código que no aceptan semilla.
+Cada caso se corre de dos maneras y ambas deben dar la referencia:
+  - con ejecutar.py y un parametros.json que lleva la semilla (la forma actual);
+  - con main.py y un config.py, fijando la semilla desde fuera de main.py, de
+    modo que también sirve para versiones del código que no aceptan semilla.
+Con --codigo se usa solo main.py si esa carpeta no tiene ejecutar.py.
 """
 
 import argparse
 import difflib
+import json
 import os
 import subprocess
 import sys
@@ -82,6 +86,32 @@ def correr(nombre, codigo, red_numerica=False):
         return r.stdout
 
 
+GEOMETRIA = {"malla": ("ROWS", "COLUMNS"), "anillo": ("NODOS_ANILLO",)}
+
+
+def correr_json(nombre, codigo):
+    """Corre un caso con ejecutar.py y parametros.json; regresa su salida estándar."""
+    conf = dict(BASE)
+    conf.update(CASOS[nombre])
+    parametros = dict(
+        red=conf["RED"], geometria={k: conf[k] for k in GEOMETRIA[conf["RED"]]},
+        routing=conf["ROUTING"], regla=conf["REGLA"], long_enlace=conf["LONG_ENLACE"],
+        ciclos=conf["CICLOS"], enlaces_dinamicos=conf["ENLACES_DINAMICOS"],
+        exploradores=conf["EXPLORADORES"], div_conexiones=conf["DIV_CONEXIONES"],
+        p=conf["P"], q=conf["Q"], alpha=conf["ALPHA"],
+        vector_popularidad=conf["VECTOR_POPULARIDAD"], vector_distancia=conf["VECTOR_DISTANCIA"],
+        semilla=SEMILLA)
+    with tempfile.TemporaryDirectory() as tmp:
+        archivo = os.path.join(tmp, "parametros.json")
+        with open(archivo, "w") as f:
+            json.dump(parametros, f)
+        r = subprocess.run([sys.executable, str(Path(codigo) / "ejecutar.py"), archivo],
+                           cwd=tmp, capture_output=True, text=True)
+        if r.returncode != 0:
+            raise RuntimeError(f"{nombre}: ejecutar.py terminó con error\n{r.stderr[-2000:]}")
+        return r.stdout
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--actualizar", action="store_true", help="regenera las referencias")
@@ -93,8 +123,15 @@ def main():
     nombres = args.casos or list(CASOS)
     fallas = 0
     REFERENCIA.mkdir(parents=True, exist_ok=True)
+    con_json = (Path(args.codigo) / "ejecutar.py").exists()
     for nombre in nombres:
         salida = correr(nombre, args.codigo, args.red_numerica)
+        if con_json:
+            salida_json = correr_json(nombre, args.codigo)
+            if salida_json != salida:
+                fallas += 1
+                print(f"DIFIERE {nombre}: ejecutar.py con parametros.json no da lo mismo que main.py con config.py")
+                continue
         ref = REFERENCIA / f"{nombre}.txt"
         if args.actualizar:
             ref.write_text(salida)

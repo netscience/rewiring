@@ -95,13 +95,14 @@ El flujo de trabajo se ejecuta en orden secuencial:
 
 | Paso | Script | Descripción |
 |------|--------|-------------|
-| 1 | `0creaCopiaSimulador.py` | Crea el árbol de directorios y copia los scripts del simulador |
-| 2 | `formacion.py` | Ejecuta `main.py` + `extractData.py` para cada combinación de parámetros |
-| 3 | `1creaPromediosFormacion.py` | Calcula promedios y desviación estándar → `datos-promedio.csv` |
-| 4 | `2creaPromediosDistGradosFormacion.py` | Promedia distribuciones de grado → `datos-promedio_grados.csv` |
-| 5 | `3creaImagenesPNG.py` | Genera imágenes de grafos e histogramas de distribución de grados |
-| 6 | `4creaGEXF.py` | Exporta grafos a formato GEXF (para Gephi con geoLayout) |
-| 7 | `5creaTablasFormacion.py` | Genera tablas CSV consolidadas en `Formacion/Medidas_estructurales/` |
+| 1 | `formacion.py` | Crea el árbol de directorios y, para cada combinación de parámetros y cada ejecución, escribe `parametros.json` y corre `ejecutar.py` + `extractData.py` |
+| 2 | `1creaPromediosFormacion.py` | Calcula promedios y desviación estándar → `datos-promedio.csv` |
+| 3 | `2creaPromediosDistGradosFormacion.py` | Promedia distribuciones de grado → `datos-promedio_grados.csv` |
+| 4 | `3creaImagenesPNG.py` | Genera imágenes de grafos e histogramas de distribución de grados |
+| 5 | `4creaGEXF.py` | Exporta grafos a formato GEXF (para Gephi con geoLayout) |
+| 6 | `5creaTablasFormacion.py` | Genera tablas CSV consolidadas en `Formacion/Medidas_estructurales/` |
+
+**Una corrida suelta.** `ejecutar.py` corre una simulación descrita por un `parametros.json` (campos en `parametros.py`): `python ejecutar.py parametros.json [carpeta]`. `main.py` se conserva para correr con un `config.py` del formato anterior. El simulador ya no lee `configuracion.py`: solo `formacion.py` y los scripts de análisis lo usan.
 
 > **Nota:** Antes de ejecutar los pasos 5–7, configurar `NODE_SCALE` en `configVisualizacion.py`:
 > - `NODE_SCALE = 1` para anillo ≈ 1500 nodos y malla ≈ 2500 nodos
@@ -115,8 +116,10 @@ ResultadosCN/Formacion/
 │   ├── R1/
 │   │   ├── CR/
 │   │   │   ├── D2/
-│   │   │   │   ├── config.py
 │   │   │   │   ├── 1/ ... 10/         ← ejecuciones
+│   │   │   │   │   ├── parametros.json   ← todos los parámetros de la corrida, incluida la semilla
+│   │   │   │   │   ├── graph.adjlist     ← red inicial
+│   │   │   │   │   ├── semilla.txt
 │   │   │   │   │   ├── salida_x.txt
 │   │   │   │   │   ├── metricas_rendimiento.csv
 │   │   │   │   │   ├── datos-salida_x.txt
@@ -192,15 +195,15 @@ Con la configuración por defecto se generan:
 
 ## Reproducibilidad y prueba de regresión
 
-**Semillas.** En `configuracion.py`, `SEMILLA_BASE = None` deja las corridas aleatorias, como siempre. Con un entero, cada corrida recibe una semilla propia, distinta y reproducible, derivada de la base, de la ruta de su configuración y de su número de ejecución; se guarda en `semilla.txt` dentro de la corrida. Una corrida suelta se reproduce con `python main.py <log> <semilla>`.
+**Semillas.** En `configuracion.py`, `SEMILLA_BASE = None` deja las corridas aleatorias, como siempre. Con un entero, cada corrida recibe una semilla propia, distinta y reproducible, derivada de la base, de la ruta de su configuración y de su número de ejecución; se guarda en `semilla.txt` dentro de la corrida. Una corrida suelta se reproduce con `python ejecutar.py <carpeta>/parametros.json <otra_carpeta>`: el archivo ya trae la semilla.
 
 **Pruebas.** La carpeta `tests/` tiene tres grupos:
 
 | Archivo | Qué prueba | Tiempo |
 |---|---|---|
 | `tests/unidades.py` | `redes.py` (topologías, coordenadas, distancias), los ruteos de `encaminamiento.py` y las reglas R1 a R4 | Segundos |
-| `tests/regresion.py` | El simulador: 11 configuraciones pequeñas (malla y anillo, todos los ruteos, R1 a R4) con semilla fija, comparadas con `tests/referencia/` | Alrededor de 1 min |
-| `tests/pipeline.py` | El pipeline completo (`0crea`, `formacion`) y los scripts de análisis (`1crea` a `5crea`) sobre una rejilla pequeña, comparados con `tests/referencia/pipeline.json` | 2 a 4 min |
+| `tests/regresion.py` | El simulador: 11 configuraciones pequeñas (malla y anillo, todos los ruteos, R1 a R4) con semilla fija, comparadas con `tests/referencia/`. Cada caso se corre con `ejecutar.py` + `parametros.json` y con `main.py` + `config.py` (formato anterior); ambos deben coincidir | Menos de 1 min |
+| `tests/pipeline.py` | El pipeline completo (`formacion`) y los scripts de análisis (`1crea` a `5crea`) sobre una rejilla pequeña, comparados con `tests/referencia/pipeline.json` | 2 a 4 min |
 
 Después de cualquier cambio:
 
@@ -239,7 +242,6 @@ graph TD
     end
 
     subgraph "Pipeline de Ejecución"
-        S0["0creaCopiaSimulador.py"]
         FORM["formacion.py"]
         S1["1creaPromediosFormacion.py"]
         S2["2creaPromediosDistGradosFormacion.py"]
@@ -248,7 +250,7 @@ graph TD
         S5["5creaTablasFormacion.py"]
     end
 
-    MAIN["main.py<br/>Punto de entrada"] --> SIMUL
+    MAIN["ejecutar.py<br/>Punto de entrada (parametros.json)"] --> SIMUL
     SIMUL --> SIM
     SIMUL --> PROC
     PROC --> MODEL
@@ -374,33 +376,33 @@ Cada combinación `(p, q)` genera una subdirectorio independiente con la nomencl
 
 ```mermaid
 sequenceDiagram
-    participant M as main.py
-    participant Main as Main
+    participant M as ejecutar.py
+    participant Par as Parametros
+    participant Main as Corrida
+    participant R as redes.py
     participant NX as NetworkX
     participant Sim as Simulation
     participant Eng as Simulator
     participant P as Process[i]
     participant CN as ComplexNetwork[i]
 
-    M->>Main: __init__()
-    Main->>Main: Lee config (nodos, ciclos, grafo)
+    M->>Par: Parametros.leer(parametros.json)
+    M->>M: fija_semilla(semilla)
+    M->>Main: Corrida(parametros)
+    M->>Main: crearRed(carpeta)
+    Main->>R: obtener_red(red, geometría)
+    R->>NX: grid_2d_graph / circulant_graph / ...
+    Main->>Main: tamEnlace = longitud_maxima / long_enlace
+    Main->>Main: escribe graph.adjlist
 
-    alt grafo == 1 (Malla)
-        M->>Main: createGrid()
-        Main->>NX: grid_2d_graph(rows, cols)
-    else grafo == 3 (Anillo)
-        M->>Main: createRing()
-        Main->>NX: circulant_graph(nodes, [1])
-    end
-
-    M->>Sim: Simulation(maxtime, main)
+    M->>Sim: Simulation(maxtime, corrida)
     Sim->>Eng: Simulator(maxtime)
     M->>Sim: readAdjacencyListNetworkX()
     Sim->>NX: graph.nodes(), neighbors()
 
     loop Para cada nodo i = 1..N
         Sim->>P: Process(neighbors, weights, engine, i)
-        M->>CN: ComplexNetwork(main, params...)
+        M->>CN: ComplexNetwork(corrida, params...)
         M->>Sim: setModel(CN, i)
         Sim->>P: setModel(CN, port=0)
         P->>CN: setProcess(process, neighbors, weights, id)
@@ -638,9 +640,8 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant U as Usuario
-    participant S0 as 0creaCopiaSimulador
     participant F as formacion.py
-    participant Main as main.py
+    participant Main as ejecutar.py
     participant ED as extractData.py
     participant S1 as 1creaPromedios
     participant S2 as 2creaPromDistGrados
@@ -649,16 +650,13 @@ sequenceDiagram
     participant S5 as 5creaTablas
     participant FS as ResultadosCN/
 
-    U->>S0: Ejecuta paso 0
-    S0->>FS: Crea árbol: red/R{n}/ruteo/D{n}/
-    S0->>FS: Copia archivos del simulador
-
     U->>F: Ejecuta formacion.py
     
     loop Por cada combinación (red × regla × ruteo × enlace)
-        F->>FS: Genera config.py con parámetros
+        F->>FS: Crea árbol: red/R{n}/ruteo/D{n}/
         loop x = 1..EJECUCIONES
-            F->>Main: subprocess.run(main.py)
+            F->>FS: x/parametros.json (con su semilla)
+            F->>Main: subprocess.run(ejecutar.py parametros.json)
             Main-->>FS: stdout → salida_x.txt
             F->>ED: subprocess.run(extractData.py, salida_x.txt)
             ED->>FS: datos-salida_x.txt

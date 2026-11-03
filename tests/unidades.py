@@ -1,6 +1,6 @@
 """Pruebas unitarias de las piezas del simulador que no dependen del motor de eventos:
-redes.py (topologías y geometría), encaminamiento.py (ruteos) y reglas.py (selección
-de candidatos).
+redes.py (topologías y geometría), encaminamiento.py (ruteos), reglas.py (selección
+de candidatos) y parametros.py (parámetros de una corrida).
 
 Uso (desde la raíz del repositorio):
     python tests/unidades.py        # o: python -m unittest tests/unidades.py -v
@@ -25,6 +25,7 @@ import numpy as np
 import redes
 from encaminamiento import Encaminamiento
 from reglas import Reglas
+from parametros import Parametros
 
 
 def cfg(**kw):
@@ -224,6 +225,44 @@ class PruebaReglas(unittest.TestCase):
 
     def test_r4_sin_rutas(self):
         self.assertEqual(self.regla(4, alpha=0.3, vp=[1, 1], vd=[1, 1], rutas=[]).seleccionar_candidato(), -1)
+
+
+
+class PruebaParametros(unittest.TestCase):
+    def ejemplo(self, **kw):
+        datos = dict(red="malla", geometria={"ROWS": 5, "COLUMNS": 7}, routing="RW-NODE2VEC",
+                     regla=4, long_enlace=2, ciclos=3, enlaces_dinamicos=2, exploradores=4,
+                     p=0.5, q=2, alpha=0.3, vector_popularidad=[1, 0], vector_distancia=[0, 1],
+                     semilla=99)
+        datos.update(kw)
+        return Parametros(**datos)
+
+    def test_ida_y_vuelta_json(self):
+        import tempfile
+        par = self.ejemplo()
+        with tempfile.TemporaryDirectory() as tmp:
+            archivo = Path(tmp) / "parametros.json"
+            par.guardar(archivo)
+            self.assertEqual(Parametros.leer(archivo), par)
+
+    def test_geometria_para_redes(self):
+        red = redes.obtener_red("malla", self.ejemplo().cfg_red())
+        self.assertEqual(red.nombre(), "malla5x7")
+
+    def test_parametro_desconocido(self):
+        datos = self.ejemplo().a_dict()
+        datos["exploradoress"] = 4
+        with self.assertRaises(ValueError):
+            Parametros.desde_dict(datos)
+
+    def test_desde_config_anterior(self):
+        config = types.SimpleNamespace(RED="anillo", NODOS_ANILLO=36, ROWS=6, COLUMNS=6,
+                                       ROUTING="RANDOM-WALK", REGLA=1, LONG_ENLACE=1, CICLOS=2,
+                                       ENLACES_DINAMICOS=2, EXPLORADORES=4, DIV_CONEXIONES=1,
+                                       P=0, Q=0, ALPHA=0, VECTOR_POPULARIDAD=0, VECTOR_DISTANCIA=0)
+        par = Parametros.desde_config(config, semilla=5)
+        self.assertEqual(par.geometria, {"NODOS_ANILLO": 36})  # solo la geometría del anillo
+        self.assertEqual((par.routing, par.semilla), ("RANDOM-WALK", 5))
 
 
 if __name__ == "__main__":

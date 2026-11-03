@@ -3,7 +3,7 @@
 Copia el código a una carpeta temporal, configura una rejilla pequeña con semilla fija
 y corre, en orden:
 
-    0creaCopiaSimulador.py  formacion.py
+    formacion.py
     1creaPromediosFormacion.py  2creaPromediosDistGradosFormacion.py
     3creaImagenesPNG.py  4creaGEXF.py  5creaTablasFormacion.py
 
@@ -11,15 +11,12 @@ Después compara todos los archivos de resultados contra tests/referencia/pipeli
 la estructura de carpetas, la salida del simulador, los archivos de extractData
 (métricas por ciclo, histogramas, grafos por ciclo), los promedios, las tablas y los
 GEXF. De las imágenes PNG solo comprueba que existan. Se ignoran los tiempos
-(metricas_rendimiento.csv), los logs, las copias del código y las líneas de comentario
+(metricas_rendimiento.csv), los logs, los archivos .py y las líneas de comentario
 con fecha o versión que escribe networkx.
 
 Congela el comportamiento ACTUAL, incluidos estos errores conocidos de los scripts de
 análisis (se corregirán en el paso 3 de la refactorización, regenerando la referencia):
-  - extractData.py normaliza los histogramas intermedios entre 2500 (malla de 50x50);
-  - 5creaTablasFormacion.py normaliza la distribución de grados con el número de nodos
-    de la malla aunque la red sea un anillo, y no conoce RW-NODE2VEC;
-  - 1crea y 2crea solo promedian si hay al menos 3 ejecuciones (aquí se usan 3).
+  - extractData.py normaliza los histogramas intermedios entre 2500 (malla de 50x50).
 
 Uso (desde la raíz del repositorio):
     python tests/pipeline.py               # compara contra la referencia
@@ -42,7 +39,7 @@ from pathlib import Path
 RAIZ = Path(__file__).resolve().parent.parent
 REFERENCIA = Path(__file__).resolve().parent / "referencia" / "pipeline.json"
 
-SCRIPTS = ["0creaCopiaSimulador.py", "formacion.py",
+SCRIPTS = ["formacion.py",
            "1creaPromediosFormacion.py", "2creaPromediosDistGradosFormacion.py",
            "3creaImagenesPNG.py", "4creaGEXF.py", "5creaTablasFormacion.py"]
 
@@ -105,9 +102,6 @@ def corre_pipeline(trabajo):
         shutil.copy2(archivo, trabajo)
     with open(trabajo / "configuracion.py", "a", encoding="utf-8") as f:
         f.write(CONFIGURACION.format(base=str(trabajo / "resultados") + "/"))
-    formacion = (trabajo / "formacion.py").read_text(encoding="utf-8")
-    formacion = re.sub(r'PYTHON_EXEC\s*=\s*"[^"]*"', f"PYTHON_EXEC = {sys.executable!r}", formacion)
-    (trabajo / "formacion.py").write_text(formacion, encoding="utf-8")
     entorno = dict(os.environ, MPLBACKEND="Agg")
     for script in SCRIPTS:
         r = subprocess.run([sys.executable, script], cwd=trabajo, env=entorno,

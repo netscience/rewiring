@@ -1,57 +1,46 @@
-import subprocess
-import zlib
-from pathlib import Path
+"""
+Corre una serie de experimentos de formación de redes definida en configuracion.py.
+
+Uso:
+    python formacion.py
+
+Para cada combinación de red, regla, exploración y longitud de enlace crea la
+carpeta RESULTADOS_DIR/<red>/R<regla>/<exploración>/D<long_enlace> y, dentro,
+una subcarpeta por ejecución (1, 2, ...). En cada ejecución escribe
+parametros.json, corre ejecutar.py (sin copiar el código del simulador) y
+después extractData.py. Las configuraciones se reparten entre NUM_WORKERS
+procesos en paralelo; cada corrida es un proceso de Python independiente.
+
+Archivos de cada ejecución <n>:
+    parametros.json, graph.adjlist, semilla.txt, metricas_rendimiento.csv,
+    salida_<n>.txt (eventos), y los de extractData.py: datos-salida_<n>.txt,
+    hist_test_<c>.txt, graph_test_<c>.adjlist.
+"""
+
 import os
-import shutil
+import subprocess
+import sys
+import zlib
+from dataclasses import replace
+from multiprocessing import Pool
+from pathlib import Path
+
 import configuracion
 import redes
-from multiprocessing import Pool
+from parametros import Parametros
 
-PYTHON_EXEC = "python"  # Si tu entorno ya responde a 'python'
+RAIZ = Path(__file__).resolve().parent   # Carpeta del código del simulador
+PYTHON_EXEC = sys.executable             # Mismo intérprete que corre este script
 
-def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, ruteo, p, q, alpha, vect_popularidad, vect_distancia):
-    constantes = {
-        #--------ANILLO------------------
-        # Número de nodos del anillo. Colocar 0 si no se usa anillo
-        "NODOS_ANILLO": configuracion.NODOS_ANILLO, 
-        #--------MALLA-------------------
-        # Filas de la malla. Colocar 0 si no se usa malla
-        "ROWS": configuracion.ROWS,
-        # Columnas de la malla                  
-        "COLUMNS": configuracion.COLUMNS,           
-        #--------FORMACION-------------
-        # Topología sobre la que se desarrollará la simulación: clave de redes.py ("malla", "anillo", ...)
-        "RED": tipo_red,                           
-        # Algoritmo de encaminamiento: "CR", "RW", "SP"
-        "ROUTING": ruteo, 
-        "P": p,
-        "Q": q,
-        "REGLA": regla,
-        "ALPHA": alpha,
-        "VECTOR_POPULARIDAD": vect_popularidad,
-        "VECTOR_DISTANCIA": vect_distancia,
-        # Divisor de la longitud de enlace dinámico: 1, 2, 4, 8, 16, 32 
-        "LONG_ENLACE": long_enlace,        
-        #--------EJECUCION---------------
-        # Número de ciclos de formación
-        "CICLOS": configuracion.CICLOS,                    
-        #--------EXTRAS------------------
-        # Número de enlaces dinámicos por nodo
-        "ENLACES_DINAMICOS": configuracion.ENLACES_DINAMICOS,       
-        # Número de experimentos a realizar
-        "EXPLORADORES": configuracion.EXPLORADORES,
-        # Divisor (con respecto al número de nodos, num_nodos/DIV_CONEXIONES) del máximo número de conexiones permitidas
-        "DIV_CONEXIONES": configuracion.DIV_CONEXIONES         
-    }
-
-    with open(nombre_archivo, 'w') as f:
-        f.write("# Archivo de constantes generado automáticamente\n\n")
-        for nombre, valor in constantes.items():
-            if isinstance(valor, str):
-                f.write(f'{nombre} = "{valor}"\n')
-            else:
-                f.write(f"{nombre} = {valor}\n")
-    print(f"Archivo '{nombre_archivo}' generado con {len(constantes)} constantes.")
+# Abreviatura de cada exploración en los nombres de carpeta
+ABREVIATURAS = {
+    "COMPASS-ROUTING": "CR",
+    "RANDOM-WALK": "RW",
+    "RW-DEGREE": "RWD",
+    "RW-INVERSE": "RWI",
+    "RW-NODE2VEC": "N2V",
+    "SHORTEST-PATH": "SP",
+}
 
 
 def semilla_corrida(ruta, ejecucion):
@@ -67,114 +56,95 @@ def semilla_corrida(ruta, ejecucion):
     return (int(base) * 1000003 + zlib.crc32(f"{relativa}|{ejecucion}".encode())) % (2**32)
 
 
-def ejecutar_configuracion(args):
-    ruta, long_enlace, r, tipo_red, ruteo, p, q, alpha, vect_popularidad, vect_distancia = args
-    print(f"\n>>> Iniciando configuración en: {ruta}")
-    
-    # Crea config.py en la ruta
-    generar_script_constantes(str(ruta) + "/config.py", long_enlace, r, tipo_red, ruteo, p ,q, alpha, vect_popularidad, vect_distancia)
-
-    for x in range(1, configuracion.EJECUCIONES + 1):
-        hoja = f"{ruta}/{x}"
-        os.makedirs(hoja, exist_ok=True)
-
-        print(f" - Simulación {x} en: {hoja}")
-
-        salida_txt = f"{hoja}/salida_{x}.txt"
-        # Creo el archivo log
-        log_file = f"{hoja}/log_{x}.txt"
-        with open(log_file, "w", encoding="utf-8") as logfile:
-            logfile.write(f"Log de la ejecución {x} en {ruta}\n")
-        
-        # Ejecuta main.py desde la carpeta CR
-        comando = [PYTHON_EXEC, "main.py", log_file]
-        semilla = semilla_corrida(ruta, x)
-        if semilla is not None:
-            comando.append(str(semilla))
-        with open(salida_txt, "w") as out_f:
-            subprocess.run(comando, cwd=ruta, stdout=out_f)
-
-        # Copia archivos auxiliares
-        for archivo in ["extractData.py", "graph.adjlist"]:
-            src = f"{ruta}/{archivo}"
-            dest = f"{hoja}/{archivo}"
-            if os.path.exists(src):
-                shutil.copy(src, dest)
-            else:
-                print(f" No se encontró: {archivo} en {ruta}")
-
-        # Ejecuta extractData.py desde la hoja
-        if os.path.exists(hoja + "/extractData.py"):
-            subprocess.run([PYTHON_EXEC, "extractData.py", f"salida_{x}.txt", "test"], cwd=hoja)
-        else:
-            print(" No se puede extraer: falta extractData.py")
-            
-    print(f"<<< Finalizada configuración en: {ruta}")
+def valida_configuracion():
+    """Regresa la lista de errores en las listas de configuracion.py (vacía si no hay)."""
+    errores = []
+    for nombre, valores, validos in (("RED", configuracion.RED, list(redes.REDES)),
+                                     ("ROUTING", configuracion.ROUTING, list(ABREVIATURAS)),
+                                     ("REGLAS", configuracion.REGLAS, [1, 2, 3, 4])):
+        if not isinstance(valores, (list, tuple)):
+            errores.append(f"{nombre} debe ser una lista, p.e. {nombre} = [{validos[0]!r}]")
+            continue
+        for v in valores:
+            if v not in validos:
+                consejo = ""
+                if isinstance(v, str) and "," in v:
+                    partes = ", ".join(repr(x.strip()) for x in v.split(","))
+                    consejo = f" (¿quisiste escribir {nombre} = [{partes}]?)"
+                errores.append(f"{nombre}: valor desconocido {v!r}{consejo}. Válidos: {validos}")
+    return errores
 
 
-if __name__ == '__main__':
-    tasks = []
-    
+def plan():
+    """Lista de (ruta, Parametros) con todas las configuraciones de configuracion.py.
+    Los parámetros no llevan semilla; se asigna una por ejecución."""
+    tareas = []
     for red in configuracion.RED:
         try:
             red_obj = redes.obtener_red(red, configuracion)
         except ValueError:
             print(f" Tipo de red desconocido, saltando: {red}")
             continue
-        nombre_red = red_obj.nombre()
-        tipo_red = red_obj.CLAVE
-        
+        geometria = {n: getattr(configuracion, n) for n in red_obj.PARAMETROS}
         for r in configuracion.REGLAS:
-            routing = "x"
             for ruteo in configuracion.ROUTING:
-                if ruteo == "COMPASS-ROUTING":
-                    routing = "CR"
-                elif ruteo == "RANDOM-WALK":
-                    routing = "RW" 
-                elif ruteo == "RW-DEGREE":
-                    routing = "RWD"
-                elif ruteo == "RW-INVERSE":
-                    routing = "RWI" 
-                elif ruteo == "RW-NODE2VEC":
-                    routing = "N2V"
-                elif ruteo == "SHORTEST-PATH":
-                    routing = "SP"
-                else:
+                if ruteo not in ABREVIATURAS:
                     print(f" Algoritmo de ruteo desconocido, saltando: {ruteo}")
                     continue
-                
+                # Node2Vec se corre para cada pareja (p, q); las demás exploraciones no usan p ni q
+                if ruteo == "RW-NODE2VEC":
+                    variantes = [(p, q, ABREVIATURAS[ruteo] + "p" + str(p).replace(".", "_") + "q" + str(q).replace(".", "_"))
+                                 for p, q in configuracion.PQ_NODE2VEC]
+                else:
+                    variantes = [(0, 0, ABREVIATURAS[ruteo])]
                 for long_enlace in configuracion.LONG_ENLACES:
-                    if ruteo == "RW-NODE2VEC":
-                        for pq in configuracion.PQ_NODE2VEC:
-                            p = pq[0]
-                            q = pq[1]
-                            pstr = str(p).replace('.',"_")
-                            qstr = str(q).replace('.',"_")
-                            ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}p{pstr}q{qstr}/D{long_enlace}"
-                        
-                            if not os.path.exists(ruta):
-                                print(f" Ruta no encontrada, saltando: {ruta}")
-                                continue
-                            if r==4:
-                                tasks.append((ruta, long_enlace, r, tipo_red, ruteo, p, q, configuracion.ALPHA, configuracion.VECTOR_POPULARIDAD, configuracion.VECTOR_DISTANCIA))
-                            else:
-                                tasks.append((ruta, long_enlace, r, tipo_red, ruteo, p, q, 0, 0, 0))
-                    else:
-                        ruta = f"{configuracion.RESULTADOS_DIR}/{nombre_red}/R{r}/{routing}/D{long_enlace}"
-                        
-                        if not os.path.exists(ruta):
-                            print(f" Ruta no encontrada, saltando: {ruta}")
-                            continue
+                    for p, q, carpeta in variantes:
+                        ruta = f"{configuracion.RESULTADOS_DIR}/{red_obj.nombre()}/R{r}/{carpeta}/D{long_enlace}"
+                        par = Parametros(
+                            red=red_obj.CLAVE, geometria=geometria, routing=ruteo, regla=r,
+                            long_enlace=long_enlace, ciclos=configuracion.CICLOS,
+                            enlaces_dinamicos=configuracion.ENLACES_DINAMICOS,
+                            exploradores=configuracion.EXPLORADORES,
+                            div_conexiones=configuracion.DIV_CONEXIONES, p=p, q=q)
                         if r == 4:
-                            tasks.append((ruta, long_enlace, r, tipo_red, ruteo, 0, 0, configuracion.ALPHA, configuracion.VECTOR_POPULARIDAD, configuracion.VECTOR_DISTANCIA))
-                        else:
-                            tasks.append((ruta, long_enlace, r, tipo_red, ruteo, 0, 0, 0, 0, 0))
+                            par = replace(par, alpha=configuracion.ALPHA,
+                                          vector_popularidad=configuracion.VECTOR_POPULARIDAD,
+                                          vector_distancia=configuracion.VECTOR_DISTANCIA)
+                        tareas.append((ruta, par))
+    return tareas
 
-    # Leer NUM_WORKERS configurado
+
+def ejecutar_configuracion(tarea):
+    """Corre todas las ejecuciones de una configuración, una tras otra."""
+    ruta, par = tarea
+    print(f"\n>>> Iniciando configuración en: {ruta}")
+    for x in range(1, configuracion.EJECUCIONES + 1):
+        hoja = Path(ruta) / str(x)
+        hoja.mkdir(parents=True, exist_ok=True)
+        print(f" - Simulación {x} en: {hoja}")
+
+        replace(par, semilla=semilla_corrida(ruta, x)).guardar(hoja / "parametros.json")
+        salida = f"salida_{x}.txt"
+        with open(hoja / salida, "w", encoding="utf-8") as out_f:
+            r = subprocess.run([PYTHON_EXEC, str(RAIZ / "ejecutar.py"), "parametros.json"],
+                               cwd=hoja, stdout=out_f)
+        if r.returncode != 0:
+            print(f" ERROR: la simulación terminó con código {r.returncode} en {hoja}")
+            continue
+        subprocess.run([PYTHON_EXEC, str(RAIZ / "extractData.py"), salida, "test"], cwd=hoja)
+    print(f"<<< Finalizada configuración en: {ruta}")
+
+
+if __name__ == "__main__":
+    errores = valida_configuracion()
+    if errores:
+        print("Error en configuracion.py:")
+        for e in errores:
+            print("  - " + e)
+        raise SystemExit(1)
+    tareas = plan()
     num_workers = getattr(configuracion, "NUM_WORKERS", 4)
-    print(f"\nEjecutando {len(tasks)} configuraciones en paralelo usando {num_workers} workers...")
-    
+    print(f"\nEjecutando {len(tareas)} configuraciones en paralelo usando {num_workers} workers...")
     with Pool(processes=num_workers) as pool:
-        pool.map(ejecutar_configuracion, tasks)
-        
+        pool.map(ejecutar_configuracion, tareas)
     print("\n¡Simulaciones de formación completadas con éxito!")

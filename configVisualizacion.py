@@ -1,4 +1,6 @@
 import configuracion
+import redes
+from formacion import ABREVIATURAS
 #Configuración para la visualización de los resultados de experimentos.s
 #--------VISUALIZACION-----------
 #Parametros para 3creaImagenesPNG.py
@@ -30,27 +32,13 @@ for i in range(len(configuracion.REGLAS)):
     if i < len(configuracion.REGLAS)-1:
         COLS_REGLAS+=","
 
-COLS_ROUTING = []
-for r in configuracion.ROUTING:
-    r = configuracion.ROUTING[i]
-    if r == "SHORTEST-PATH":
-        ar = "SP"
-    elif r == "COMPASS-ROUTING":
-        ar = "CR"
-    elif r == "RANDOM-WALK":
-        ar = "RW"
-    COLS_ROUTING.append(ar)
+# Abreviaturas de las exploraciones, las mismas que usa formacion.py en los nombres de carpeta
+COLS_ROUTING = [ABREVIATURAS[r] for r in configuracion.ROUTING if r in ABREVIATURAS]
 
 COLS_CONEXIONES = "n"
 #PARA AGENTES COOPERADORES:
-TOPOLOGIAS=[]#["malla8x8","anillo50"]
-for i in range(len(configuracion.RED)):
-    r = configuracion.RED[i]
-    if r == "malla":
-        t="malla"+str(configuracion.ROWS)+"x"+str(configuracion.COLUMNS)
-    elif r == "anillo":
-        t="anillo"+str(configuracion.NODOS_ANILLO)
-    TOPOLOGIAS.append(t)    
+# Nombres de las carpetas de cada red, p.e. ["malla8x8","anillo64"]
+TOPOLOGIAS = [redes.obtener_red(r, configuracion).nombre() for r in configuracion.RED if r in redes.REDES]
 ALG_ENCAMINAMIENTO=COLS_ROUTING
 
 #PARA AGENTES SEMI-COOPERADORES:
