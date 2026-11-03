@@ -20,8 +20,10 @@ Ejemplo de parametros.json:
       "exploradores": 4,
       "div_conexiones": 1,
       "p": 0, "q": 0,
+      "umbral_r1": 0.5, "umbral_enlace": 1.0,
       "alpha": 0, "vector_popularidad": 0, "vector_distancia": 0,
-      "semilla": 123456
+      "semilla": 123456,
+      "parar_en_diametro_2": true
     }
 """
 
@@ -44,10 +46,13 @@ class Parametros:
     div_conexiones: int = 1     # Máximo de conexiones por nodo = num_nodos / div_conexiones
     p: float = 0                # Parámetros de Node2Vec (solo RW-NODE2VEC)
     q: float = 0
+    umbral_r1: float = 0.5      # R1: al reconectar, el candidato debe tener f_n >= umbral_r1 * exploradores
+    umbral_enlace: float = 1.0  # Sin enlaces libres, el enlace menos usado se reconecta si sus usos (f_e) < umbral_enlace * exploradores
     alpha: float = 0            # Parámetros de R4 (solo regla 4)
     vector_popularidad: object = 0
     vector_distancia: object = 0
     semilla: object = None      # Entero, o None para una corrida no reproducible
+    parar_en_diametro_2: bool = True  # Detener la simulación si el diámetro llega a 2 (si es False, solo se registra)
     extra: dict = field(default_factory=dict)  # Parámetros adicionales de nuevas reglas o redes
 
     #---Geometría para redes.py---
@@ -78,29 +83,3 @@ class Parametros:
     def leer(cls, ruta):
         """Lee los parámetros de un archivo JSON."""
         return cls.desde_dict(json.loads(Path(ruta).read_text(encoding="utf-8")))
-
-    @classmethod
-    def desde_config(cls, config, semilla=None):
-        """Construye los parámetros a partir de un módulo config.py con constantes
-        en mayúsculas (el formato anterior). Se conserva para main.py y las pruebas."""
-        import redes
-        red = config.RED
-        clase = redes.REDES.get(red)
-        nombres = clase.PARAMETROS if clase is not None else ()
-        return cls(
-            red=red,
-            geometria={n: getattr(config, n) for n in nombres},
-            routing=config.ROUTING,
-            regla=config.REGLA,
-            long_enlace=config.LONG_ENLACE,
-            ciclos=config.CICLOS,
-            enlaces_dinamicos=config.ENLACES_DINAMICOS,
-            exploradores=config.EXPLORADORES,
-            div_conexiones=config.DIV_CONEXIONES,
-            p=getattr(config, "P", 0),
-            q=getattr(config, "Q", 0),
-            alpha=getattr(config, "ALPHA", 0),
-            vector_popularidad=getattr(config, "VECTOR_POPULARIDAD", 0),
-            vector_distancia=getattr(config, "VECTOR_DISTANCIA", 0),
-            semilla=semilla if semilla is not None else getattr(config, "SEMILLA", None),
-        )

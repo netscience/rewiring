@@ -1,4 +1,5 @@
-"""Corre todas las pruebas: unidades, regresión del simulador y pipeline completo.
+"""Corre todas las pruebas: unidades, regresión del simulador, análisis del formato
+anterior y pipeline completo.
 
 Uso (desde la raíz del repositorio):
     python tests/correr_todas.py            # todas (unos 3 a 5 minutos)
@@ -14,7 +15,7 @@ PRUEBAS = Path(__file__).resolve().parent
 
 def main():
     rapidas = "--rapidas" in sys.argv
-    lista = ["unidades.py", "regresion.py"] + ([] if rapidas else ["pipeline.py"])
+    lista = ["unidades.py", "regresion.py"] + ([] if rapidas else ["analisis_anterior.py", "pipeline.py"])
     resultados = {}
     for prueba in lista:
         print(f"\n===== {prueba} =====", flush=True)

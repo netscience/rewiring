@@ -24,7 +24,20 @@ PQ_NODE2VEC = [
     ]
 
 # Reglas de reconexión
-REGLAS=[1,2,3,4] #1,2,3,4
+REGLAS=[1,2,3] #1,2,3,4
+# Umbrales de la reconexión (listas, como los demás factores; ver README).
+# Ambos se expresan como fracción del número de exploradores del ciclo.
+# - UMBRAL_ENLACE (todas las reglas): cuando un nodo ya no tiene enlaces libres,
+#   toma su enlace dinámico menos usado en el ciclo y lo reconecta solo si sus
+#   usos son menores que UMBRAL_ENLACE * EXPLORADORES. 1 (por omisión) = se
+#   reconecta salvo que todos los exploradores lo hayan usado; 0 = nunca se reconecta.
+# - UMBRAL_R1 (solo R1): al reconectar, el nodo más visitado solo se acepta si
+#   sus visitas en f_n son al menos UMBRAL_R1 * EXPLORADORES. 0.5 (por omisión) =
+#   la mitad de los exploradores; 0 = sin umbral. No se aplica al llenar enlaces libres.
+# Cada valor distinto del de omisión agrega un sufijo a la carpeta de la regla:
+# R1u0_25 (UMBRAL_R1 = 0.25), R3e0_5 (UMBRAL_ENLACE = 0.5), R1u0_25e0_5 (ambos).
+UMBRAL_ENLACE = [1]
+UMBRAL_R1 = [0.5]
 # Parámetros de R4
 ALPHA = 0.3 # Balancea la popularidad y la distancia
 # Ambos vectores deben ser de igual longitud
@@ -40,7 +53,7 @@ LONG_ENLACES=[1,2,4]
 # Semilla base para reproducir los experimentos. Si es None, cada corrida es
 # aleatoria (como antes). Si es un entero, cada corrida recibe una semilla
 # propia, distinta y reproducible, derivada de esta base, de su configuración
-# y de su número de ejecución; se guarda en semilla.txt dentro de la corrida.
+# y de su número de ejecución; se guarda en parametros.json y resumen.json dentro de la corrida.
 SEMILLA_BASE = None
 CICLOS=2                   # Número de ciclos de reconexión
 EJECUCIONES = 2            # Número de ejecuciones por experimento   

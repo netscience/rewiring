@@ -22,10 +22,11 @@ sys.path.insert(0, str(RAIZ))
 import networkx as nx
 import numpy as np
 
-import redes
-from encaminamiento import Encaminamiento
-from reglas import Reglas
-from parametros import Parametros
+from simulador import redes
+from simulador.encaminamiento import Encaminamiento
+from simulador.reglas import Reglas
+from simulador.parametros import Parametros
+from analisis import medidas
 
 
 def cfg(**kw):
@@ -255,14 +256,66 @@ class PruebaParametros(unittest.TestCase):
         with self.assertRaises(ValueError):
             Parametros.desde_dict(datos)
 
-    def test_desde_config_anterior(self):
-        config = types.SimpleNamespace(RED="anillo", NODOS_ANILLO=36, ROWS=6, COLUMNS=6,
-                                       ROUTING="RANDOM-WALK", REGLA=1, LONG_ENLACE=1, CICLOS=2,
-                                       ENLACES_DINAMICOS=2, EXPLORADORES=4, DIV_CONEXIONES=1,
-                                       P=0, Q=0, ALPHA=0, VECTOR_POPULARIDAD=0, VECTOR_DISTANCIA=0)
-        par = Parametros.desde_config(config, semilla=5)
-        self.assertEqual(par.geometria, {"NODOS_ANILLO": 36})  # solo la geometría del anillo
-        self.assertEqual((par.routing, par.semilla), ("RANDOM-WALK", 5))
+
+
+class PruebaMedidas(unittest.TestCase):
+    def test_estructurales_del_anillo(self):
+        m = medidas.estructurales(nx.cycle_graph(10))
+        self.assertEqual((m["diametro"], m["componentes"], m["frac_gigante"]), (5, 1, 1.0))
+        self.assertAlmostEqual(m["aspl"], nx.average_shortest_path_length(nx.cycle_graph(10)))
+
+    def test_componente_gigante(self):
+        G = nx.disjoint_union(nx.path_graph(6), nx.path_graph(2))
+        m = medidas.estructurales(G)
+        self.assertEqual((m["componentes"], m["diametro"]), (2, 5))
+        self.assertAlmostEqual(m["frac_gigante"], 6 / 8)
+
+    def test_greedy_en_la_red_base_siempre_llega(self):
+        G = nx.grid_2d_graph(5, 5)
+        G = nx.convert_node_labels_to_integers(G, first_label=1)
+        r = medidas.navegabilidad(G, medidas.Distancias(G), 200, np.random.default_rng(0))
+        self.assertEqual(r["exito"], 1.0)
+        self.assertAlmostEqual(r["estiramiento"], 1.0)
+
+    def test_greedy_falla_en_minimo_local(self):
+        # red base: camino 1-2-3-4-5; red final: sin la arista 2-3, con atajo 1-5
+        base = nx.path_graph(range(1, 6))
+        G = nx.Graph([(1, 2), (3, 4), (4, 5), (1, 5)])
+        r = medidas.navegabilidad(G, medidas.Distancias(base), 50, np.random.default_rng(1))
+        self.assertLess(r["exito"], 1.0)
+
+    def test_ks_y_cv(self):
+        self.assertEqual(medidas.ks_grados(nx.cycle_graph(8), nx.cycle_graph(8)), 0.0)
+        self.assertEqual(medidas.ks_grados(nx.cycle_graph(8), nx.complete_graph(8)), 1.0)
+        self.assertEqual(medidas.de_grados(nx.cycle_graph(8))["cv_grado"], 0.0)
+
+    def test_gini(self):
+        self.assertEqual(medidas.de_grados(nx.cycle_graph(8))["gini_grado"], 0.0)
+        self.assertAlmostEqual(medidas.de_grados(nx.star_graph(9))["gini_grado"], 8 / 20)  # estrella de 10 nodos: (n-2)/(2n)
+        self.assertAlmostEqual(medidas.gini([0, 0, 0, 1]), 3 / 4)
+
+    def test_fraccion_de_cambio(self):
+        anterior = {(1, 0): 5, (1, 1): 7, (2, 0): 9}
+        actual = {(1, 0): 5, (1, 1): 8, (2, 0): 9, (2, 1): 4}
+        self.assertAlmostEqual(medidas.frac_cambio(actual, anterior), 2 / 4)
+
+    def test_intervalo_de_confianza(self):
+        media, semi = medidas.media_ic95([1, 2, 3])
+        self.assertAlmostEqual(media, 2.0)
+        self.assertAlmostEqual(semi, 4.302652729911275 / math.sqrt(3), places=6)
+
+
+
+class PruebaCarpetas(unittest.TestCase):
+    def test_sufijos_de_umbrales(self):
+        sys.path.insert(0, str(RAIZ / "experimentos"))
+        import formacion
+        self.assertEqual(formacion.carpeta_regla(1, 0.5, 1), "R1")          # valores por omisión
+        self.assertEqual(formacion.carpeta_regla(3, 0.5, 1.0), "R3")
+        self.assertEqual(formacion.carpeta_regla(1, 0.25, 1), "R1u0_25")
+        self.assertEqual(formacion.carpeta_regla(3, 0.25, 1), "R3")         # UMBRAL_R1 solo en R1
+        self.assertEqual(formacion.carpeta_regla(3, 0.5, 0.5), "R3e0_5")
+        self.assertEqual(formacion.carpeta_regla(1, 0, 2), "R1u0e2")
 
 
 if __name__ == "__main__":

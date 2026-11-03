@@ -19,12 +19,25 @@ Simulador de eventos discretos para **modelos de reconexión distribuida en rede
 
 ### Dependencias
 - `networkx` — creación y análisis de grafos
-- `numpy` — cálculos estadísticos (promedios, desviación estándar, selección probabilística)
+- `numpy` — cálculos estadísticos (promedios, intervalos de confianza, selección probabilística)
+- `scipy` — distancias y componentes en el análisis (rápido también para redes de miles de nodos)
 - `matplotlib` — generación de imágenes PNG
+
+### Organización del repositorio
+
+El simulador y el análisis están separados; solo se comunican por la carpeta de resultados.
+
+| Carpeta | Contenido |
+|---|---|
+| `simulador/` | Motor de eventos y modelo de reconexión. Corre una simulación descrita por un `parametros.json` y registra la red base, la red de cada ciclo y los mensajes. No lee `configuracion.py` ni calcula medidas |
+| `experimentos/` | `configuracion.py` (la serie de experimentos) y `formacion.py`, que crea las carpetas, escribe un `parametros.json` por corrida y corre el simulador en paralelo |
+| `analisis/` | Lee la carpeta de resultados, reconstruye la red de cada ciclo y calcula todas las medidas y sus promedios; opcionalmente, los archivos y tablas anteriores y las figuras y GEXF de corridas elegidas. No importa el simulador |
+| `tests/` | Pruebas unitarias, de regresión del simulador y de extremo a extremo |
+| `obsoleto/` | Scripts anteriores (`extractData.py`, `1crea`–`5crea`, `main.py`, ...), solo como referencia |
 
 ### Configuración de rutas
 
-Modificar `configuracion.py` para indicar la ruta de la carpeta de resultados:
+Modificar `experimentos/configuracion.py` para indicar la ruta de la carpeta de resultados:
 
 ```python
 BASE_DIR = str(home_path) + "/Documents/Repositorios/ResultadosCN/"
@@ -39,13 +52,15 @@ Se recomienda crear un directorio exclusivo para los resultados considerando la 
 
 ### Configuración de parámetros
 
-Todos los parámetros se definen en `configuracion.py`:
+Todos los parámetros de una serie de experimentos se definen en `experimentos/configuracion.py`:
 
 | Parámetro | Variable | Valores por defecto | Descripción |
 |-----------|----------|-------------------|-------------|
 | Topología inicial | `RED` | `["malla", "anillo"]` | Malla 2D o anillo circulante |
 | Orden de la topología | `ROWS`, `COLUMNS`, `NODOS_ANILLO` | 8×8, 64 | Número de nodos |
 | Regla de reconexión | `REGLAS` | `[1, 2, 3, 4]` | R1, R2, R3, R4 |
+| Umbral de uso del enlace | `UMBRAL_ENLACE` | `[1]` | Un nodo sin enlaces libres reconecta su enlace menos usado solo si sus usos en el ciclo son menores que `UMBRAL_ENLACE × EXPLORADORES` (ver [Umbrales de reconexión](#umbrales-de-reconexión)) |
+| Umbral de visitas de R1 | `UMBRAL_R1` | `[0.5]` | Al reconectar, R1 solo acepta al nodo más visitado si sus visitas en `f_n` son al menos `UMBRAL_R1 × EXPLORADORES` (ver [Umbrales de reconexión](#umbrales-de-reconexión)) |
 | Algoritmo de ruteo | `ROUTING` | `["SHORTEST-PATH", "COMPASS-ROUTING", "RANDOM-WALK", "RW-DEGREE", "RW-INVERSE", "RW-NODE2VEC"]` | SP, CR, RW, RWD, RWI o N2V |
 | Parámetros node2vec | `PQ_NODE2VEC` | lista de tuplas `(p, q)` | Pares de parámetros de retorno (`p`) y exploración (`q`) para `RW-NODE2VEC` |
 | Longitud de enlace | `LONG_ENLACES` | `[1, 2, 4]` | Divisores de la longitud máxima (D, D/2, D/4) |
@@ -58,7 +73,7 @@ Todos los parámetros se definen en `configuracion.py`:
 
 ### Paralelismo y Selección de Workers
 
-El simulador ejecuta las configuraciones independientes de forma paralela para acelerar sustancialmente el tiempo total de procesamiento. El grado de paralelismo se controla con el parámetro `NUM_WORKERS` en `configuracion.py`.
+El simulador ejecuta las configuraciones independientes de forma paralela para acelerar sustancialmente el tiempo total de procesamiento. El grado de paralelismo se controla con el parámetro `NUM_WORKERS` en `experimentos/configuracion.py`. El análisis usa el mismo valor por omisión.
 
 #### 1. Cómo identificar el número de núcleos (cores) en tu equipo
 
@@ -89,91 +104,91 @@ Para saber cuántos núcleos lógicos tiene tu procesador, puedes ejecutar el si
 * **Trabajo de Fondo:** Si requieres usar otros programas pesados en paralelo, utiliza `N / 2` o `2 * N / 3` (ej. 6 workers en un procesador de 10 núcleos).
 * **RAM y Escala de Red:** Cada worker mantiene en memoria las estructuras y caminos mínimos de NetworkX. Si trabajas con redes grandes (ej. 2500 nodos o más), supervisa el Monitor de Actividad o el Administrador de Tareas para verificar que el uso acumulado de memoria RAM no supere el límite físico de tu equipo.
 
-### Ejecución del pipeline
+### Ejecución
 
-El flujo de trabajo se ejecuta en orden secuencial:
+Dos pasos, desde la raíz del repositorio:
 
-| Paso | Script | Descripción |
-|------|--------|-------------|
-| 1 | `formacion.py` | Crea el árbol de directorios y, para cada combinación de parámetros y cada ejecución, escribe `parametros.json` y corre `ejecutar.py` + `extractData.py` |
-| 2 | `1creaPromediosFormacion.py` | Calcula promedios y desviación estándar → `datos-promedio.csv` |
-| 3 | `2creaPromediosDistGradosFormacion.py` | Promedia distribuciones de grado → `datos-promedio_grados.csv` |
-| 4 | `3creaImagenesPNG.py` | Genera imágenes de grafos e histogramas de distribución de grados |
-| 5 | `4creaGEXF.py` | Exporta grafos a formato GEXF (para Gephi con geoLayout) |
-| 6 | `5creaTablasFormacion.py` | Genera tablas CSV consolidadas en `Formacion/Medidas_estructurales/` |
+```bash
+python experimentos/formacion.py     # 1. simulaciones (solo registran redes y mensajes)
+python analisis/analizar.py          # 2. análisis de RESULTADOS_DIR
+```
 
-**Una corrida suelta.** `ejecutar.py` corre una simulación descrita por un `parametros.json` (campos en `parametros.py`): `python ejecutar.py parametros.json [carpeta]`. `main.py` se conserva para correr con un `config.py` del formato anterior. El simulador ya no lee `configuracion.py`: solo `formacion.py` y los scripts de análisis lo usan.
+`formacion.py` revisa `RED`, `ROUTING` y `REGLAS` antes de empezar y se detiene si hay un valor desconocido. Para cada combinación de parámetros y cada ejecución crea la carpeta, escribe `parametros.json` (con su semilla) y corre `python -m simulador.ejecutar parametros.json`.
 
-> **Nota:** Antes de ejecutar los pasos 5–7, configurar `NODE_SCALE` en `configVisualizacion.py`:
-> - `NODE_SCALE = 1` para anillo ≈ 1500 nodos y malla ≈ 2500 nodos
-> - `NODE_SCALE = 20` para anillo ≈ 50 nodos y malla ≈ 64 nodos
+`analizar.py` acepta otra carpeta de resultados como argumento y estas opciones:
+
+| Opción | Efecto |
+|---|---|
+| `--pares N` | Pares para la navegabilidad (2000 por omisión) |
+| `--workers N` | Procesos en paralelo (por omisión, `NUM_WORKERS`) |
+| `--formato-anterior` | Además, los archivos de los scripts anteriores: `datos-salida_x.txt`, `hist_test_*.txt` y `graph_test_*.adjlist` por corrida, `datos-promedio*.csv` por configuración y las tablas `Medidas_estructurales/` (una columna por longitud de enlace). Para comparar con trabajos anteriores de malla y anillo |
+| `--figuras RUTA ...` | PNG de la red final y de su distribución de grados, y GEXF para Gephi, solo de las corridas bajo esas rutas (relativas a la carpeta de resultados), p.e. `--figuras malla8x8/R1/RW/D1/1` |
+| `--escala-nodos X` | Tamaño de los nodos en las imágenes (por omisión se ajusta al tamaño de la red) |
+
+Se puede volver a correr cuantas veces se quiera sin repetir las simulaciones, y también analiza resultados del formato anterior (con `salida_<n>.txt` y `config.py`).
+
+**Una corrida suelta.** `python -m simulador.ejecutar parametros.json [carpeta]` corre una simulación descrita por un `parametros.json` (campos en `simulador/parametros.py`). El archivo trae la semilla, así que repite exactamente la corrida. Desde Python: `simulador.ejecutar.simular(parametros, carpeta)`.
 
 ### Estructura de resultados
 
 ```
 ResultadosCN/Formacion/
-├── malla50x50/
+├── malla8x8/
 │   ├── R1/
 │   │   ├── CR/
-│   │   │   ├── D2/
-│   │   │   │   ├── 1/ ... 10/         ← ejecuciones
-│   │   │   │   │   ├── parametros.json   ← todos los parámetros de la corrida, incluida la semilla
-│   │   │   │   │   ├── graph.adjlist     ← red inicial
-│   │   │   │   │   ├── semilla.txt
-│   │   │   │   │   ├── salida_x.txt
-│   │   │   │   │   ├── metricas_rendimiento.csv
-│   │   │   │   │   ├── datos-salida_x.txt
-│   │   │   │   │   ├── graph_test_*.adjlist
-│   │   │   │   │   └── hist_test_*.txt
-│   │   │   │   ├── datos-promedio.csv
-│   │   │   │   └── datos-promedio_grados.csv
-│   │   │   ├── D4/ ...
-│   │   │   └── D8/ ...
-│   │   ├── RW/  ...                   ← Random Walk clásico
-│   │   ├── RWD/ ...                   ← Random Walk — Degree
-│   │   ├── RWI/ ...                   ← Random Walk — Inverse Degree
-│   │   ├── N2Vp0_25q0_25/            ← Node2Vec (p=0.25, q=0.25)
-│   │   │   ├── D2/ ...
-│   │   │   └── D4/ ...
-│   │   ├── N2Vp0_25q0_5/ ...
-│   │   ├── ...                        ← una carpeta por cada par (p,q)
-│   │   ├── N2Vp2q2/ ...
-│   │   └── SP/ ...
-│   ├── R2/ ...
-│   └── R3/ ...
+│   │   │   ├── D1/
+│   │   │   │   ├── 1/ ... n/                ← ejecuciones
+│   │   │   │   │   │   (simulador)
+│   │   │   │   │   ├── parametros.json      ← todos los parámetros, incluida la semilla
+│   │   │   │   │   ├── graph.adjlist        ← red base (ciclo 0)
+│   │   │   │   │   ├── nodos.csv            ← coordenadas de cada nodo
+│   │   │   │   │   ├── enlaces.csv          ← enlaces dinámicos al terminar cada ciclo
+│   │   │   │   │   ├── mensajes.csv         ← mensajes por ciclo y tipo
+│   │   │   │   │   ├── resumen.json         ← ciclos completados, motivo de fin, tiempo, semilla
+│   │   │   │   │   │   (análisis)
+│   │   │   │   │   ├── metricas_ciclo.csv   ← todas las medidas, una fila por ciclo
+│   │   │   │   │   ├── navegabilidad.csv    ← greedy en la red base y en la red final
+│   │   │   │   │   └── longitudes_enlaces.csv
+│   │   │   │   ├── metricas-promedio.csv    ← media e IC 95 % por ciclo
+│   │   │   │   └── estado-final.csv         ← estado final de cada ejecución
+│   │   │   └── D2/ ...
+│   │   ├── RW/ RWD/ RWI/ SP/ ...
+│   │   └── N2Vp0_5q2/ ...            ← una carpeta por cada par (p,q) de Node2Vec
+│   └── R2/ ...
 ├── anillo64/ ...
-└── Medidas_estructurales/
-    └── Medidas_estructurales_*.csv
+└── estado_final.csv                  ← una fila por configuración
 ```
 
-### Métricas estructurales extraídas
+Con `--formato-anterior` se agregan además los archivos de los scripts anteriores, y con `--figuras` los PNG y GEXF de las corridas elegidas (ver la tabla de opciones).
 
-Para cada ciclo de reconexión, `extractData.py` genera:
+**Carpeta de la regla y umbrales.** La carpeta `R<regla>` lleva un sufijo por cada umbral que no tenga su valor por omisión, para que cada valor quede en su propia carpeta: `u<valor>` para `UMBRAL_R1` (solo en R1) y `e<valor>` para `UMBRAL_ENLACE`, con el punto decimal escrito como `_`. Por ejemplo, con `UMBRAL_R1 = [0.5, 0.25]` y `UMBRAL_ENLACE = [1, 0.5]` se generan `R1`, `R1e0_5`, `R1u0_25` y `R1u0_25e0_5`, y para R3, `R3` y `R3e0_5`. Con los valores por omisión las carpetas son las de siempre (`R1`, `R2`, ...), así que los resultados anteriores y sus semillas siguen siendo comparables. Los valores exactos de cada corrida quedan en su `parametros.json` y en las columnas `umbral_r1` y `umbral_enlace` de `estado_final.csv`.
 
-| Métrica | Descripción |
-|---------|-------------|
-| **AvCl** | Coeficiente de agrupamiento promedio |
-| **ASPL** | Longitud de trayectoria promedio (Average Shortest Path Length) |
-| **Diámetro** | Diámetro del grafo |
-| **Componentes** | Número de componentes conexas |
-| **Orden** | Número de nodos |
+La red del ciclo c es la red base más los enlaces de `enlaces.csv` con `ciclo = c`. Cada fila dice qué enlace (`enlace`) de qué nodo (`nodo`) está conectado con quién (`conectado`), así que se conserva quién es dueño de cada enlace.
 
-### Métricas de rendimiento (mensajes intercambiados)
+### Medidas del análisis
 
-| Métrica | Descripción | Unidad |
-|---------|-------------|--------|
-| `Tiempo_Ejecucion_Segundos` | Tiempo total de ejecución de la simulación | segundos |
-| `Mensajes_Intercambiados` | Número total de mensajes intercambiados | entero |
-| `PIF-EXPLORACION` | Mensajes PIF enviados en fase de exploración | entero |
-| `PACKAGE` | Paquetes de datos enviados | entero |
-| `ACK` | Mensajes de reconocimiento enviados | entero |
-| `PIF-NEGOCIACION` | Mensajes PIF enviados en fase de negociación | entero |
-| `SOLICITUD-CONEXION` | Solicitudes de conexión enviadas | entero |
-| `ACEPTO-CONEXION` | Confirmaciones de conexión aceptadas | entero |
-| `DESCONEXION` | Solicitudes de desconexión iniciadas | entero |
-| `DESCONEXION-RECIBIDA` | Confirmaciones de desconexión recibidas | entero |
-| `RECHAZO-CONEXION` | Rechazos de conexión recibidos | entero |
-| `PIF-CONEXION` | Mensajes PIF enviados en fase de conexión | entero |
+Por ciclo (`metricas_ciclo.csv`; promedios con intervalo de confianza al 95 % en `metricas-promedio.csv`):
+
+| Grupo | Columnas |
+|---|---|
+| Estructura | `agrupamiento`, `aspl`, `diametro`, `componentes`, `frac_gigante` (fracción de nodos en la componente gigante), `asortatividad` |
+| Grados | `grado_medio`, `grado_max`, `cv_grado` (coeficiente de variación), `gini_grado` (índice de Gini; 0 en una red regular, (n−2)/(2n) ≈ 0.5 en una estrella) |
+| Enlaces dinámicos | `enlaces_dinamicos`, `longitud_media` (número de saltos entre sus extremos en la red base) |
+| Convergencia | `ks_grado` (Kolmogorov-Smirnov con la distribución de grados del ciclo anterior), `frac_cambio` (fracción de enlaces dinámicos que cambió) |
+| Costo | `mensajes` (total del ciclo), `mensajes_exploracion` (PACKAGE + ACK) |
+
+`componentes` y `frac_gigante` valen 1 en todas las corridas: la reconexión solo quita y pone enlaces dinámicos y nunca toca las aristas de la red base, así que la red siempre es conexa. Se conservan como verificación del simulador.
+
+Además, por corrida:
+
+- `navegabilidad.csv`: ruteo greedy guiado por la distancia en saltos de la red base (desde cada nodo se avanza al vecino más cercano al destino según esa distancia), sobre `--pares` pares al azar, en la red base y en la red final: éxito, pasos medios y estiramiento (pasos / distancia más corta).
+- `longitudes_enlaces.csv`: distribución de longitudes (en saltos de la red base) de los enlaces dinámicos de la red final, junto al número medio de nodos a esa distancia de un nodo cualquiera, para comparar la distribución observada con la que daría una elección al azar.
+
+El estado final (`estado-final.csv` por configuración y `estado_final.csv` global) es el promedio de los últimos 5 ciclos de cada medida, más la navegabilidad de la red final. Si una ejecución terminó antes porque el diámetro llegó a 2, sus últimos valores se repiten hasta completar los ciclos.
+
+### Mensajes registrados
+
+`mensajes.csv` tiene, para cada ciclo, el número de mensajes procesados de cada tipo: `PIF-EXPLORACION`, `PACKAGE`, `ACK`, `PIF-NEGOCIACION`, `SOLICITUD-CONEXION`, `ACEPTO-CONEXION`, `DESCONEXION`, `DESCONEXION-RECIBIDA`, `RECHAZO-CONEXION` y `PIF-CONEXION`. `resumen.json` trae el total y el tiempo de ejecución.
 
 ### Espacio de experimentos
 
@@ -189,30 +204,33 @@ Con la configuración por defecto se generan:
 | Ejecuciones | 1–10 | 10 |
 | **Total** | **(2 + 16) × 3 × 5 × 10** | **2 700 simulaciones** |
 
-> **Nota:** Para agregar los algoritmos clásicos (`SP`, `CR`, `RW`) simplemente inclúyelos en la lista `ROUTING` de `configuracion.py`.
+> **Nota:** Para agregar los algoritmos clásicos (`SP`, `CR`, `RW`) simplemente inclúyelos en la lista `ROUTING` de `experimentos/configuracion.py`.
 
 ---
 
-## Reproducibilidad y prueba de regresión
+## Reproducibilidad y pruebas
 
-**Semillas.** En `configuracion.py`, `SEMILLA_BASE = None` deja las corridas aleatorias, como siempre. Con un entero, cada corrida recibe una semilla propia, distinta y reproducible, derivada de la base, de la ruta de su configuración y de su número de ejecución; se guarda en `semilla.txt` dentro de la corrida. Una corrida suelta se reproduce con `python ejecutar.py <carpeta>/parametros.json <otra_carpeta>`: el archivo ya trae la semilla.
+**Semillas.** En `experimentos/configuracion.py`, `SEMILLA_BASE = None` deja las corridas aleatorias. Con un entero, cada corrida recibe una semilla propia, distinta y reproducible, derivada de la base, de la ruta de su configuración y de su número de ejecución; queda en `parametros.json` y en `resumen.json`. Una corrida se repite con `python -m simulador.ejecutar <carpeta>/parametros.json <otra_carpeta>`.
 
-**Pruebas.** La carpeta `tests/` tiene tres grupos:
+**Diámetro 2.** Por omisión la simulación se detiene si el diámetro llega a 2 (`parar_en_diametro_2` en `parametros.json`); `resumen.json` registra en qué ciclo ocurrió y el motivo de fin.
+
+**Pruebas.**
 
 | Archivo | Qué prueba | Tiempo |
 |---|---|---|
-| `tests/unidades.py` | `redes.py` (topologías, coordenadas, distancias), los ruteos de `encaminamiento.py` y las reglas R1 a R4 | Segundos |
-| `tests/regresion.py` | El simulador: 11 configuraciones pequeñas (malla y anillo, todos los ruteos, R1 a R4) con semilla fija, comparadas con `tests/referencia/`. Cada caso se corre con `ejecutar.py` + `parametros.json` y con `main.py` + `config.py` (formato anterior); ambos deben coincidir | Menos de 1 min |
-| `tests/pipeline.py` | El pipeline completo (`formacion`) y los scripts de análisis (`1crea` a `5crea`) sobre una rejilla pequeña, comparados con `tests/referencia/pipeline.json` | 2 a 4 min |
+| `tests/unidades.py` | `redes.py` (topologías, coordenadas, distancias), los ruteos, las reglas R1 a R4, `parametros.py` y medidas del análisis | Segundos |
+| `tests/regresion.py` | El simulador: 15 configuraciones pequeñas (malla y anillo, todos los ruteos, R1 a R4, umbrales de reconexión, parada por diámetro 2) con semilla fija; compara `enlaces.csv`, `mensajes.csv` y `resumen.json` con `tests/referencia/` | Segundos |
+| `tests/analisis_anterior.py` | El análisis sobre resultados del formato anterior (`salida_<n>.txt`), comparado con lo que producían los scripts anteriores | Menos de 1 min |
+| `tests/pipeline.py` | De extremo a extremo: `experimentos/formacion.py` y `analisis/analizar.py` sobre una rejilla pequeña, comparados con `tests/referencia/pipeline.json` | 1 a 3 min |
 
 Después de cualquier cambio:
 
 ```bash
 python tests/correr_todas.py            # todas
-python tests/correr_todas.py --rapidas  # sin el pipeline
+python tests/correr_todas.py --rapidas  # solo unidades y regresión
 ```
 
-Si un cambio de comportamiento es intencional, se regeneran las referencias con `--actualizar` en `regresion.py` o `pipeline.py`. La prueba de pipeline congela el comportamiento actual de los scripts de análisis, incluidos sus errores conocidos (listados en su encabezado), que se corregirán regenerando esa referencia.
+Si un cambio de comportamiento es intencional, se regeneran las referencias con `--actualizar` en la prueba correspondiente.
 
 ---
 
@@ -236,21 +254,20 @@ graph TD
         REG["Reglas<br/>Reglas de recableado"]
     end
 
-    subgraph "Configuración"
-        CONF["configuracion.py<br/>Parámetros del experimento"]
-        CONFV["configVisualizacion.py<br/>Parámetros de visualización"]
+    subgraph "experimentos/"
+        CONF["configuracion.py<br/>Serie de experimentos"]
+        FORM["formacion.py<br/>Plan y ejecución en paralelo"]
     end
 
-    subgraph "Pipeline de Ejecución"
-        FORM["formacion.py"]
-        S1["1creaPromediosFormacion.py"]
-        S2["2creaPromediosDistGradosFormacion.py"]
-        S3["3creaImagenesPNG.py"]
-        S4["4creaGEXF.py"]
-        S5["5creaTablasFormacion.py"]
+    subgraph "Carpeta de resultados"
+        RES["parametros.json · graph.adjlist · nodos.csv<br/>enlaces.csv · mensajes.csv · resumen.json"]
     end
 
-    MAIN["ejecutar.py<br/>Punto de entrada (parametros.json)"] --> SIMUL
+    subgraph "analisis/"
+        AN["analizar.py<br/>Medidas y promedios"]
+    end
+
+    MAIN["simulador/ejecutar.py<br/>Punto de entrada (parametros.json)"] --> SIMUL
     SIMUL --> SIM
     SIMUL --> PROC
     PROC --> MODEL
@@ -261,19 +278,15 @@ graph TD
     CN --> REG
     EVT -.-> SIM
 
-    CONF --> MAIN
-    CONF --> S0
     CONF --> FORM
-    FORM --> MAIN
-    S0 --> FORM
-    FORM -.-> S1
-    S1 -.-> S2
-    S2 -.-> S3
-    S3 -.-> S4
-    S4 -.-> S5
+    FORM -->|parametros.json| MAIN
+    MAIN -->|registra| RES
+    RES --> AN
 ```
 
 ### Componentes del simulador
+
+Todos en `simulador/`.
 
 #### Motor de simulación de eventos discretos
 
@@ -295,6 +308,9 @@ graph TD
 | `enlace.py` | Enlace dinámico: ID, longitud máxima, estado libre/ocupado, nodo conectado |
 | `reglas.py` | 3 reglas de selección de candidato a reconexión |
 | `redes.py` | Tipos de red (malla, anillo): creación del grafo, coordenadas y distancia entre nodos |
+| `parametros.py` | Parámetros de una corrida (`parametros.json`) |
+| `ejecutar.py` | Corre una simulación a partir de sus parámetros |
+| `salida.py` | Escribe los archivos de la corrida (red de cada ciclo, mensajes, resumen) |
 
 ---
 
@@ -312,15 +328,31 @@ Cada ciclo de simulación ejecuta 3 fases coordinadas mediante **PIF (Propagatio
 ### Fase 2: Negociación (`PIF-NEGOCIACION`)
 - Cada nodo selecciona candidatos a conexión usando `f_n` y una regla
 - Si tiene enlaces libres → envía `SOLICITUD-CONEXION`
-- Si no tiene enlaces libres → evalúa recableado del enlace menos usado (`f_e`)
+- Si no tiene enlaces libres → evalúa recableado del enlace menos usado (`f_e`), sujeto a los [umbrales de reconexión](#umbrales-de-reconexión)
 - Los destinos responden con `ACEPTO-CONEXION` o `RECHAZO-CONEXION`
 - Se desempatan solicitudes cruzadas (gana el ID mayor)
 
 ### Fase 3: Conexión (`PIF-CONEXION`)
 - Se materializan las conexiones/desconexiones aceptadas
 - Se actualiza el grafo NetworkX subyacente
-- Se imprimen líneas `c` (cableado) o `r` (recableado) a `stdout`
-- Se reinician atributos para el nuevo ciclo
+- Se registra el estado de los enlaces dinámicos en `enlaces.csv` y los mensajes del ciclo en `mensajes.csv`
+- Se reinician atributos para el nuevo ciclo (`f_n` y `f_e` vuelven a cero)
+
+### Umbrales de reconexión
+
+Dos conteos que cada nodo acumula durante la exploración de un ciclo deciden la reconexión:
+
+- **`f_n[v]`**: cuántas veces aparece el nodo `v` en las rutas de los exploradores del nodo. No cuenta al propio nodo, a sus vecinos de la red base ni a los nodos con los que ya está conectado por un enlace dinámico. Si una caminata pasa dos veces por `v`, cuenta dos.
+- **`f_e[l]`**: cuántos exploradores del nodo salieron (y regresaron) por su enlace dinámico `l`.
+
+En la negociación, cada nodo hace una de dos cosas:
+
+1. **Si tiene enlaces libres**, los llena con los candidatos que elige la regla en `f_n`, siempre que respeten la longitud máxima del enlace. Aquí no se aplica ningún umbral.
+2. **Si no tiene enlaces libres**, considera reconectar **un solo** enlace por ciclo, el que tenga menor `f_e`:
+   - **`UMBRAL_ENLACE`** (todas las reglas). El enlace se reconecta solo si `f_e[l] < UMBRAL_ENLACE × EXPLORADORES`. Con 1, el valor por omisión, se reconecta salvo que todos los exploradores del ciclo lo hayan usado. Con 0.5, solo si lo usó menos de la mitad. Con 0 nunca se reconecta: los enlaces se llenan una vez y se quedan fijos.
+   - **`UMBRAL_R1`** (solo R1). La regla propone al nodo más visitado de `f_n`, y la reconexión se hace solo si `f_n[candidato] ≥ UMBRAL_R1 × EXPLORADORES`. Con 0.5, el valor por omisión, con 4 exploradores el candidato necesita al menos 2 visitas. Con 0 no hay umbral. Si el candidato no cumple el umbral o la longitud máxima, ese ciclo no se reconecta, porque no se prueba un segundo candidato. R2, R3 y R4 no usan este umbral.
+
+Los dos se expresan como fracción del número de exploradores, así que su efecto no cambia al cambiar `EXPLORADORES`. En `experimentos/configuracion.py` son listas, como los demás factores: cada valor genera sus propias carpetas de resultados (ver [Estructura de resultados](#estructura-de-resultados)). En una corrida suelta se fijan con `umbral_enlace` y `umbral_r1` en `parametros.json`.
 
 ### Algoritmos de encaminamiento
 
@@ -342,7 +374,7 @@ Cada ciclo de simulación ejecuta 3 fases coordinadas mediante **PIF (Propagatio
 Cuando `ROUTING` incluye `"RW-NODE2VEC"`, se deben definir las combinaciones de parámetros en `PQ_NODE2VEC`:
 
 ```python
-# configuracion.py
+# experimentos/configuracion.py
 PQ_NODE2VEC = [
     (0.25, 0.25), (0.25, 0.5), (0.25, 1), (0.25, 2),
     (0.5,  0.25), (0.5,  0.5), (0.5,  1), (0.5,  2),
@@ -364,7 +396,7 @@ Cada combinación `(p, q)` genera una subdirectorio independiente con la nomencl
 
 | Regla | Selección de candidato |
 |-------|----------------------|
-| R1 | Nodo más visitado en `f_n` (mayor frecuencia) |
+| R1 | Nodo más visitado en `f_n` (mayor frecuencia); al reconectar, solo si tiene al menos `UMBRAL_R1 × EXPLORADORES` visitas |
 | R2 | Primer nodo en `f_n` (orden de descubrimiento) |
 | R3 | Selección probabilística proporcional a la frecuencia en `f_n` |
 
@@ -377,7 +409,7 @@ Cada combinación `(p, q)` genera una subdirectorio independiente con la nomencl
 ```mermaid
 sequenceDiagram
     participant M as ejecutar.py
-    participant Par as Parametros
+    participant PR as Parametros
     participant Main as Corrida
     participant R as redes.py
     participant NX as NetworkX
@@ -386,7 +418,7 @@ sequenceDiagram
     participant P as Process[i]
     participant CN as ComplexNetwork[i]
 
-    M->>Par: Parametros.leer(parametros.json)
+    M->>PR: Parametros.leer(parametros.json)
     M->>M: fija_semilla(semilla)
     M->>Main: Corrida(parametros)
     M->>Main: crearRed(carpeta)
@@ -640,51 +672,29 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     participant U as Usuario
-    participant F as formacion.py
-    participant Main as ejecutar.py
-    participant ED as extractData.py
-    participant S1 as 1creaPromedios
-    participant S2 as 2creaPromDistGrados
-    participant S3 as 3creaImagenesPNG
-    participant S4 as 4creaGEXF
-    participant S5 as 5creaTablas
+    participant F as experimentos/formacion.py
+    participant S as simulador (ejecutar)
     participant FS as ResultadosCN/
+    participant A as analisis/analizar.py
 
-    U->>F: Ejecuta formacion.py
-    
-    loop Por cada combinación (red × regla × ruteo × enlace)
-        F->>FS: Crea árbol: red/R{n}/ruteo/D{n}/
+    U->>F: python experimentos/formacion.py
+    loop Por cada combinación (red × regla × ruteo × enlace), en paralelo
+        F->>FS: Crea red/R{n}/ruteo/D{n}/
         loop x = 1..EJECUCIONES
             F->>FS: x/parametros.json (con su semilla)
-            F->>Main: subprocess.run(ejecutar.py parametros.json)
-            Main-->>FS: stdout → salida_x.txt
-            F->>ED: subprocess.run(extractData.py, salida_x.txt)
-            ED->>FS: datos-salida_x.txt
-            ED->>FS: graph_test_ciclo.adjlist
-            ED->>FS: hist_test_ciclo.txt
+            F->>S: python -m simulador.ejecutar parametros.json
+            S->>FS: graph.adjlist, nodos.csv
+            S->>FS: enlaces.csv y mensajes.csv (al terminar cada ciclo)
+            S->>FS: resumen.json
         end
     end
 
-    U->>S1: Ejecuta paso 1
-    S1->>FS: Promedia AvCl, ASPL, Diámetro
-    S1->>FS: → datos-promedio.csv (con std)
-
-    U->>S2: Ejecuta paso 2
-    S2->>FS: Promedia distribuciones de grado
-    S2->>FS: → datos-promedio_grados.csv
-
-    U->>S3: Ejecuta paso 3
-    S3->>FS: Genera visualización de grafos
-    S3->>FS: → img_graph_test_*.png
-    S3->>FS: → distGrados*.png
-
-    U->>S4: Ejecuta paso 4
-    S4->>FS: Exporta grafos con coordenadas
-    S4->>FS: → graph_test_*.gexf
-
-    U->>S5: Ejecuta paso 5
-    S5->>FS: Consolida medidas estructurales
-    S5->>FS: → Medidas_estructurales/*.csv
+    U->>A: python analisis/analizar.py
+    A->>FS: Por corrida: reconstruye la red de cada ciclo
+    A->>FS: → metricas_ciclo.csv, navegabilidad.csv, longitudes_enlaces.csv
+    A->>FS: Por configuración: → metricas-promedio.csv, estado-final.csv
+    A->>FS: Global: → estado_final.csv
+    A->>FS: Opcional: --formato-anterior (archivos y tablas anteriores), --figuras (PNG y GEXF)
 ```
 
 ---

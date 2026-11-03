@@ -1,11 +1,11 @@
 
-from event import Event
-from model import Model
-from encaminamiento import Encaminamiento
+from .event import Event
+from .model import Model
+from .encaminamiento import Encaminamiento
 import random
-from paquete import Paquete
-from reglas import Reglas
-from enlace import Enlace
+from .paquete import Paquete
+from .reglas import Reglas
+from .enlace import Enlace
 import sys
 import operator
 import networkx as nx
@@ -35,9 +35,13 @@ class ComplexNetwork(Model):
         
     def init(self):
         self.contadorCiclos=1#contador que indica el ciclo en el que se encuentra la simulación
-        self.frecEnlace = self.__num_paquetes*1#umbral de frecuencia de uso de enlace dinámico
+        #umbral de frecuencia de uso de enlace dinámico: sin enlaces libres, el enlace menos usado en el ciclo
+        #se reconecta solo si sus usos son menores que este valor (parametros.umbral_enlace * exploradores; 1 por omisión)
+        self.frecEnlace = self.__num_paquetes*self.__main.parametros.umbral_enlace
         if(self.__regla==1):
-            self.frecNodo = self.__num_paquetes*0.5#umbral de frecuencia de visita a nodos, sobre la cual se considera a un nodo en la regla de recableado
+            #umbral de frecuencia de visita a nodos, sobre la cual se considera a un nodo en la regla de recableado
+            #(fracción del número de exploradores; parametros.umbral_r1, 0.5 por omisión)
+            self.frecNodo = self.__num_paquetes*self.__main.parametros.umbral_r1
         else:
             self.frecNodo = self.__num_paquetes*0
         self.paquetes=[]#lista de paquetes exploradores enviados, servirá para buscar rutas hacia mis posibles candidatos a conexión
@@ -552,15 +556,12 @@ class ComplexNetwork(Model):
                         enlace.libre=False#el enlace ahora ya no esta libre
                         if(enlace.idConectado!=-1):
                             self.vecinosConectadosDinamicos.remove(enlace.idConectado)
-                            print("r ",self.id," ",enlace.idConectado," ",package.rutaAuxiliar[len(package.rutaAuxiliar)-1]," ",self.contadorCiclos)
                             #actualizo el grafo networkx de la simulacion:
                             #print("soy",self.id,"DESCONEXION mis vecinos en el grafo antes del cambio son",list(self.__main.graph.neighbors(self.id)))
                             #print("aristas antes del cambio:",list(self.__main.graph.edges()))
                             self.__main.graph.remove_edge(int(self.id),int(enlace.idConectado))
                             #print("soy",self.id,"DESCONEXION con",enlace.idConectado,"ahora mis vecinos en el grafo son",list(self.__main.graph.neighbors(self.id)))
                             #print("aristas despues del cambio:",list(self.__main.graph.edges()))
-                        else:
-                            print("c ",self.id," ",-1," ",package.rutaAuxiliar[len(package.rutaAuxiliar)-1]," ",self.contadorCiclos)
                         #actualizo el grafo networkx de la simulacion:
                         #print("soy",self.id,"CONEXION mis vecinos en el grafo antes del cambio son",list(self.__main.graph.neighbors(self.id)))
                         #print("aristas antes del cambio:",list(self.__main.graph.edges()))
@@ -600,11 +601,14 @@ class ComplexNetwork(Model):
                     #print("soy",self.id,"mis neighbors en el objeto grafo networkx son",list(self.__main.graph.neighbors(self.id)))
                     #for i in self.enlacesDinamicos:
                         #print("soy",self.id,"mi enlace con id",i.idEnlace,"esta conectado con",i.idConectado)
-                    #nx.write_adjlist(self.__main.graph,"graph"+str(self.contadorCiclos)+".adjlist")   
+                    #Termina el ciclo en toda la red: se registra la red (enlaces dinámicos) y los mensajes del ciclo
+                    self.__main.fin_de_ciclo(self.contadorCiclos)
                     if(self.contadorCiclos<self.__main.ciclos):
                         new_package=Paquete(self.id,0)
                         new_package.diametro=nx.diameter(self.__main.graph)
-                        if not(new_package.diametro==2):
+                        if(new_package.diametro==2):
+                            self.__main.diametro_2(self.contadorCiclos)
+                        if not(new_package.diametro==2) or not self.__main.parametros.parar_en_diametro_2:
                             newevent = Event("PIF-EXPLORACION", self.clock+1.0, self.id, self.id, new_package)
                             self.transmit(newevent)
                             self.contadorCiclos+=1

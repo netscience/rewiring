@@ -1,18 +1,14 @@
 """
 Ejecuta una corrida del simulador.
 
-Uso:
-    python ejecutar.py parametros.json [carpeta]
+Uso (desde la raíz del repositorio, o con ella en PYTHONPATH):
+    python -m simulador.ejecutar parametros.json [carpeta]
+o también
+    python simulador/ejecutar.py parametros.json [carpeta]
 
 Lee los parámetros de la corrida (ver parametros.py) y escribe en `carpeta`
-(por omisión, la carpeta donde está parametros.json):
-    graph.adjlist             red inicial
-    semilla.txt               semilla usada (vacío si la corrida no es reproducible)
-    metricas_rendimiento.csv  tiempo de ejecución y conteo de mensajes por tipo
-
-Los eventos de conexión y reconexión se imprimen en la salida estándar, una
-línea por evento ("r fuente desconecta conecta ciclo" o "c fuente -1 conecta ciclo");
-formacion.py la redirige a salida_<n>.txt.
+(por omisión, la carpeta donde está parametros.json) la red base, la red de
+cada ciclo y los mensajes por ciclo (ver salida.py).
 
 El simulador se puede llamar desde otro programa con simular(parametros, carpeta).
 """
@@ -22,29 +18,24 @@ import sys
 import time
 from pathlib import Path
 
+if not __package__:
+    # Corrido como archivo (python simulador/ejecutar.py), o como módulo principal de un proceso
+    # hijo de multiprocessing ("spawn", el modo por omisión en macOS y Windows):
+    # se importa como paquete para que funcionen las importaciones relativas
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    __package__ = "simulador"
+    import simulador  # noqa: F401
+
 import networkx as nx
 import numpy as np
 
-import redes
-from complexNetwork import ComplexNetwork
-from event import Event
-from paquete import Paquete
-from parametros import Parametros
-from simulation import Simulation
-
-TIPOS_EVENTO = [
-    "PIF-EXPLORACION",
-    "PACKAGE",
-    "ACK",
-    "PIF-NEGOCIACION",
-    "SOLICITUD-CONEXION",
-    "ACEPTO-CONEXION",
-    "DESCONEXION",
-    "DESCONEXION-RECIBIDA",
-    "RECHAZO-CONEXION",
-    "PIF-CONEXION",
-]
-
+from . import redes
+from .complexNetwork import ComplexNetwork
+from .event import Event
+from .paquete import Paquete
+from .parametros import Parametros
+from .salida import Registro
+from .simulation import Simulation
 
 class Corrida:
     """Estado global de una corrida, compartido por todos los nodos.
@@ -61,6 +52,23 @@ class Corrida:
         self.__coordinador = 1                # Identificador del nodo coordinador de la simulación
         self.__nodosTotales = -1              # Número de nodos total del grafo
         self.__tamEnlace = None               # Longitud máxima de un enlace dinámico
+        self.modelos = {}                     # id -> ComplexNetwork, para registrar el estado al fin de cada ciclo
+        self.motor = None                     # Motor de eventos (conteo de mensajes)
+        self.registro = None                  # salida.Registro, o None para no escribir archivos
+        self.ciclos_completados = 0
+        self.ciclo_diametro_2 = None          # Primer ciclo al final del cual el diámetro es 2
+
+    #---REGISTRO (lo llama el coordinador)---
+
+    def fin_de_ciclo(self, ciclo):
+        """El coordinador avisa que terminó el ciclo en toda la red."""
+        self.ciclos_completados = ciclo
+        if self.registro is not None:
+            self.registro.ciclo(ciclo, self.modelos, self.motor.event_counts)
+
+    def diametro_2(self, ciclo):
+        if self.ciclo_diametro_2 is None:
+            self.ciclo_diametro_2 = ciclo
 
     #---CREACION DE LA RED----------------
 
@@ -114,7 +122,7 @@ def fija_semilla(semilla):
 
 def simular(par, carpeta="."):
     """Corre una simulación con los parámetros `par` y escribe sus archivos en
-    `carpeta`. Regresa un diccionario con el tiempo y los conteos de mensajes."""
+    `carpeta`. Regresa el resumen de la corrida (lo mismo que resumen.json)."""
     carpeta = Path(carpeta)
     carpeta.mkdir(parents=True, exist_ok=True)
     # La semilla se fija antes de cualquier decisión aleatoria
@@ -122,6 +130,8 @@ def simular(par, carpeta="."):
 
     corrida = Corrida(par)
     corrida.crearRed(carpeta)
+    corrida.registro = Registro(carpeta)
+    corrida.registro.nodos(corrida.red, sorted(corrida.graph.nodes()))
 
     experimento = Simulation(sys.maxsize, corrida)
     experimento.readAdjacencyListNetworkX()
@@ -136,6 +146,8 @@ def simular(par, carpeta="."):
                            par.p, par.q,                            # Node2Vec
                            par.alpha, par.vector_popularidad, par.vector_distancia)  # R4
         experimento.setModel(m, i)
+        corrida.modelos[i] = m
+    corrida.motor = experimento.engine
 
     # Evento semilla: el coordinador arranca un PIF para la fase de EXPLORACION
     paquete = Paquete(0, 0)
@@ -146,18 +158,20 @@ def simular(par, carpeta="."):
     experimento.run()
     tiempo = time.perf_counter() - inicio
 
-    conteos = experimento.engine.event_counts
-    metricas = {"Tiempo_Ejecucion_Segundos": tiempo,
-                "Mensajes_Intercambiados": experimento.engine.total_events}
-    metricas.update({t: conteos.get(t, 0) for t in TIPOS_EVENTO})
-
-    # Se registra la semilla usada, para poder reproducir la corrida
-    with open(carpeta / "semilla.txt", "w", encoding="utf-8") as f:
-        f.write(("" if par.semilla is None else str(par.semilla)) + "\n")
-    with open(carpeta / "metricas_rendimiento.csv", "w", encoding="utf-8") as f:
-        f.write(",".join(metricas) + "\n")
-        f.write(",".join([f"{tiempo:.6f}"] + [str(v) for v in list(metricas.values())[1:]]) + "\n")
-    return metricas
+    if corrida.ciclos_completados == par.ciclos:
+        motivo = "ciclos"
+    elif corrida.ciclo_diametro_2 is not None:
+        motivo = "diametro_2"
+    else:
+        motivo = "otro"
+    resumen = {"ciclos_completados": corrida.ciclos_completados,
+               "motivo_fin": motivo,
+               "ciclo_diametro_2": corrida.ciclo_diametro_2,
+               "mensajes_totales": experimento.engine.total_events,
+               "tiempo_s": round(tiempo, 6),
+               "semilla": par.semilla}
+    corrida.registro.cerrar(resumen)
+    return resumen
 
 
 if __name__ == "__main__":
