@@ -24,7 +24,7 @@ PQ_NODE2VEC = [
     ]
 
 # Reglas de reconexión
-REGLAS=[1,2,3,4] #1,2,3,4
+REGLAS=[1] #1,2,3,4
 # Parámetros de R4
 ALPHA = 0.3 # Balancea la popularidad y la distancia
 # Ambos vectores deben ser de igual longitud
@@ -35,9 +35,14 @@ VECTOR_DISTANCIA = [0,1,0,1,1,0,1,1]
 # Divisor de la longitud de enlace dinámico.
 # Se recomendan valores que sean potencia de 2, 
 # p.e., 1, 2, 4, 8, 16, etc. 
-LONG_ENLACES=[2]             
+LONG_ENLACES=[1]             
 #--------EJECUCION---------------
-CICLOS=5                   # Número de ciclos de reconexión
+# Semilla base para reproducir los experimentos. Si es None, cada corrida es
+# aleatoria (como antes). Si es un entero, cada corrida recibe una semilla
+# propia, distinta y reproducible, derivada de esta base, de su configuración
+# y de su número de ejecución; se guarda en semilla.txt dentro de la corrida.
+SEMILLA_BASE = None
+CICLOS=2                   # Número de ciclos de reconexión
 EJECUCIONES = 2            # Número de ejecuciones por experimento   
 #--------EXTRAS------------------
 ENLACES_DINAMICOS=2        # Número de enlaces dinámicos por nodo

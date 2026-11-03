@@ -1,8 +1,10 @@
 import subprocess
+import zlib
 from pathlib import Path
 import os
 import shutil
 import configuracion
+import redes
 from multiprocessing import Pool
 
 PYTHON_EXEC = "python"  # Si tu entorno ya responde a 'python'
@@ -18,7 +20,7 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, rute
         # Columnas de la malla                  
         "COLUMNS": configuracion.COLUMNS,           
         #--------FORMACION-------------
-        # Topología sobre la que se desarrollará la simulación: 1 -> "malla" o 3->"anillo"
+        # Topología sobre la que se desarrollará la simulación: clave de redes.py ("malla", "anillo", ...)
         "RED": tipo_red,                           
         # Algoritmo de encaminamiento: "CR", "RW", "SP"
         "ROUTING": ruteo, 
@@ -52,6 +54,19 @@ def generar_script_constantes(nombre_archivo, long_enlace, regla, tipo_red, rute
     print(f"Archivo '{nombre_archivo}' generado con {len(constantes)} constantes.")
 
 
+def semilla_corrida(ruta, ejecucion):
+    """Semilla reproducible de una corrida, o None si SEMILLA_BASE es None.
+
+    Depende de la base, de la ruta de la configuración relativa a
+    RESULTADOS_DIR y del número de ejecución, de modo que cada corrida tiene
+    una semilla distinta y la misma en cualquier máquina."""
+    base = getattr(configuracion, "SEMILLA_BASE", None)
+    if base is None:
+        return None
+    relativa = os.path.relpath(ruta, configuracion.RESULTADOS_DIR)
+    return (int(base) * 1000003 + zlib.crc32(f"{relativa}|{ejecucion}".encode())) % (2**32)
+
+
 def ejecutar_configuracion(args):
     ruta, long_enlace, r, tipo_red, ruteo, p, q, alpha, vect_popularidad, vect_distancia = args
     print(f"\n>>> Iniciando configuración en: {ruta}")
@@ -72,8 +87,12 @@ def ejecutar_configuracion(args):
             logfile.write(f"Log de la ejecución {x} en {ruta}\n")
         
         # Ejecuta main.py desde la carpeta CR
+        comando = [PYTHON_EXEC, "main.py", log_file]
+        semilla = semilla_corrida(ruta, x)
+        if semilla is not None:
+            comando.append(str(semilla))
         with open(salida_txt, "w") as out_f:
-            subprocess.run([PYTHON_EXEC, "main.py", log_file], cwd=ruta, stdout=out_f)
+            subprocess.run(comando, cwd=ruta, stdout=out_f)
 
         # Copia archivos auxiliares
         for archivo in ["extractData.py", "graph.adjlist"]:
@@ -97,15 +116,13 @@ if __name__ == '__main__':
     tasks = []
     
     for red in configuracion.RED:
-        if red == "anillo":
-            nombre_red = "anillo" + str(configuracion.NODOS_ANILLO)
-            tipo_red = 3
-        elif red == "malla":
-            nombre_red = f"malla{configuracion.ROWS}x{configuracion.COLUMNS}"
-            tipo_red = 1    
-        else:
+        try:
+            red_obj = redes.obtener_red(red, configuracion)
+        except ValueError:
             print(f" Tipo de red desconocido, saltando: {red}")
-            continue   
+            continue
+        nombre_red = red_obj.nombre()
+        tipo_red = red_obj.CLAVE
         
         for r in configuracion.REGLAS:
             routing = "x"

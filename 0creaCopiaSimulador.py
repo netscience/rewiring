@@ -1,6 +1,7 @@
 import os
 import shutil
 import configuracion
+import redes
 
 def crear_arbol_directorios(ruta):
     try:
@@ -22,19 +23,16 @@ archivos_simulador = [
     "simulation.py",
     "simulator.py",
     "main.py",
-    "reglas.py"
+    "reglas.py",
+    "redes.py"
 ]
 
 for red in configuracion.RED:
-    if red == "anillo":
-        nombre_red = "anillo" + str(configuracion.NODOS_ANILLO)
-        tipo_red = 3
-    elif red == "malla":
-        nombre_red = f"malla{configuracion.ROWS}x{configuracion.COLUMNS}"
-        tipo_red = 1    
-    else:
+    try:
+        nombre_red = redes.obtener_red(red, configuracion).nombre()
+    except ValueError:
         print(f" Tipo de red desconocido, saltando: {red}")
-        continue   
+        continue
         
     for r in configuracion.REGLAS:
         routing = "x"

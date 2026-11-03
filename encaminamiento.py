@@ -3,58 +3,27 @@ import random
 import math
 import networkx as nx
 
+# Ángulos (en grados) que difieren en menos de esto se consideran iguales en Compass Routing
+TOLERANCIA_ANGULO = 1e-9
+
 class Encaminamiento:
 
     def __init__(self):
-        self._coord_cache_grid = {}   # {nodeId: (x, y)}
-        self._coord_cache_ring = {}   # {nodeId: (x, y)}
         self._sp_cache = {}           # {source: {dest: path}}
 
-    #---ANILLO-------------------------------
-
-    def distanciaAnillo(self,node1,node2,main):
-        """Returns the euclidean distance between two nodes"""
-        n1 = self.getCoordinatesAnillo(node1,main)
-        n2 = self.getCoordinatesAnillo(node2,main)
-        d = math.sqrt(math.pow(n2[0]-n1[0],2)+math.pow(n2[1]-n1[1],2))
-        return d
-
-    def getCoordinatesAnillo(self,nodeId,main):
-        if nodeId not in self._coord_cache_ring:
-            #transformación de coordenadas polares a rectangulares:
-            angulo=math.radians((360/main.nodes)*nodeId)
-            x = 10*math.cos(angulo)
-            y = 10*math.sin(angulo)
-            self._coord_cache_ring[nodeId] = (x,y)
-        return self._coord_cache_ring[nodeId]
-
-    #---MALLA----------------------------------
+    #---DISTANCIA---------------------------------
 
     def distancia(self,node1,node2,main):
-        n1 = self.getCoordinates(node1,main)
-        n2 = self.getCoordinates(node2,main)
-        d = math.sqrt(math.pow(n2[0]-n1[0],2)+math.pow(n2[1]-n1[1],2))
-        return d
-
-    def getCoordinates(self,nodeId,main):
-        if nodeId not in self._coord_cache_grid:
-            x = (nodeId-1)%main.rows
-            y = (nodeId-1)//main.columns
-            self._coord_cache_grid[nodeId] = (x,y)
-        return self._coord_cache_grid[nodeId]
+        """Distancia euclidiana entre dos nodos, según la geometría de la red (ver redes.py)"""
+        return main.red.distancia(node1,node2)
 
     #---COMPASS ROUTING--------------------------
 
     def angulo(self,destino,origen,nodo,main):
         #print("or",origen,"des",destino,"vecino",nodo)
-        if main.grafo==1:#si trabajo en una malla:
-            p0 = self.getCoordinates(origen,main)
-            p1 = self.getCoordinates(destino,main)
-            p2 = self.getCoordinates(nodo,main)
-        elif main.grafo==3:#si trabajo en un anillo:
-            p0 = self.getCoordinatesAnillo(origen,main)
-            p1 = self.getCoordinatesAnillo(destino,main)
-            p2 = self.getCoordinatesAnillo(nodo,main)
+        p0 = main.red.coordenadas(origen)
+        p1 = main.red.coordenadas(destino)
+        p2 = main.red.coordenadas(nodo)
         #print("origen",p0)
         #print("destino",p1)
         #print("vecino",p2)
@@ -82,18 +51,24 @@ class Encaminamiento:
         return angC
 
     def Compass_Routing(self,identificador,vecinos,destino,main):
+        """Reenvía al vecino que forma el menor ángulo con la dirección al destino.
+
+        Empates: si varios vecinos forman el menor ángulo, gana el último de la
+        lista (la regla de siempre). Dos ángulos que difieren en menos de
+        TOLERANCIA_ANGULO grados se consideran iguales: en el anillo, por ejemplo,
+        con el destino diametralmente opuesto ambos vecinos forman el mismo ángulo,
+        pero el redondeo de senos y cosenos los hace diferir en el decimal 14, y
+        esa diferencia cambia entre sistemas operativos."""
         w = random.choice(vecinos)
-        ang = 360
         #print("origen",identificador,"destino",destino,"vecinos",vecinos)
         if destino in vecinos:
             w = destino
         else:
-            for vecino in vecinos:     
-                ang2 = self.angulo(destino,identificador,vecino,main) 
-                if ang2 <= ang:
+            angulos = [self.angulo(destino,identificador,vecino,main) for vecino in vecinos]
+            minimo = min(angulos)
+            for vecino, ang2 in zip(vecinos, angulos):
+                if ang2 <= minimo + TOLERANCIA_ANGULO:
                     w = vecino
-                    ang = ang2
-        #print("angulo seleccionado",ang)
         #print("vecino seleccionado",w)
         return w 
 
@@ -166,11 +141,7 @@ class Encaminamiento:
         """genera un nodo destino de manera aleatoria (que no esté en mis vecinos)"""
         d = False
         while(d == False):
-            dest=-1
-            if main.grafo==3:#si es un anillo con el que estoy trabajando:
-                dest = random.randint(1,main.nodes)
-            elif main.grafo==1:#si es una malla con la que estoy trabajando:
-                dest = random.randint(1,main.rows*main.columns)
+            dest = random.randint(1,main.nodosTotales)
             if dest != identificador and dest not in vecinos:
                 d = True
         return dest

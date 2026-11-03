@@ -190,6 +190,29 @@ Con la configuración por defecto se generan:
 
 ---
 
+## Reproducibilidad y prueba de regresión
+
+**Semillas.** En `configuracion.py`, `SEMILLA_BASE = None` deja las corridas aleatorias, como siempre. Con un entero, cada corrida recibe una semilla propia, distinta y reproducible, derivada de la base, de la ruta de su configuración y de su número de ejecución; se guarda en `semilla.txt` dentro de la corrida. Una corrida suelta se reproduce con `python main.py <log> <semilla>`.
+
+**Pruebas.** La carpeta `tests/` tiene tres grupos:
+
+| Archivo | Qué prueba | Tiempo |
+|---|---|---|
+| `tests/unidades.py` | `redes.py` (topologías, coordenadas, distancias), los ruteos de `encaminamiento.py` y las reglas R1 a R4 | Segundos |
+| `tests/regresion.py` | El simulador: 11 configuraciones pequeñas (malla y anillo, todos los ruteos, R1 a R4) con semilla fija, comparadas con `tests/referencia/` | Alrededor de 1 min |
+| `tests/pipeline.py` | El pipeline completo (`0crea`, `formacion`) y los scripts de análisis (`1crea` a `5crea`) sobre una rejilla pequeña, comparados con `tests/referencia/pipeline.json` | 2 a 4 min |
+
+Después de cualquier cambio:
+
+```bash
+python tests/correr_todas.py            # todas
+python tests/correr_todas.py --rapidas  # sin el pipeline
+```
+
+Si un cambio de comportamiento es intencional, se regeneran las referencias con `--actualizar` en `regresion.py` o `pipeline.py`. La prueba de pipeline congela el comportamiento actual de los scripts de análisis, incluidos sus errores conocidos (listados en su encabezado), que se corregirán regenerando esa referencia.
+
+---
+
 ## III. Arquitectura del simulador
 
 ```mermaid
@@ -266,9 +289,10 @@ graph TD
 |---------|-----------------|
 | `complexNetwork.py` | **Núcleo del simulador**. Implementa las 3 fases del ciclo de reconexión |
 | `paquete.py` | Paquete explorador: lleva ruta, destino, distancia máxima, ID de enlace |
-| `encaminamiento.py` | 3 algoritmos de ruteo + cálculo de distancias en malla y anillo |
+| `encaminamiento.py` | Algoritmos de ruteo (la distancia entre nodos la obtiene de `redes.py`) |
 | `enlace.py` | Enlace dinámico: ID, longitud máxima, estado libre/ocupado, nodo conectado |
 | `reglas.py` | 3 reglas de selección de candidato a reconexión |
+| `redes.py` | Tipos de red (malla, anillo): creación del grafo, coordenadas y distancia entre nodos |
 
 ---
 

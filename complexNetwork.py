@@ -10,6 +10,11 @@ import sys
 import operator
 import networkx as nx
 
+# Distancias que superan la longitud del enlace en menos de esto se consideran dentro:
+# en el anillo hay cuerdas que miden exactamente el límite (p.e. el nodo opuesto con D/1),
+# y el redondeo de senos y cosenos las deja un poco arriba o abajo según el sistema operativo
+TOLERANCIA_DISTANCIA = 1e-9
+
 class ComplexNetwork(Model):
     """La clase ComplexNetwork desciende de la clase Model e implementa los metodos init() y  
         receive()"que en la clase madre se definen como abstractos"""
@@ -288,12 +293,8 @@ class ComplexNetwork(Model):
                             if(clave==-1 or clave not in self.f_n):#R4 puede no encontrar candidato
                                 continue
                                 
-                            distancia=-1
-                            if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
-                                distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
-                            else:#si estoy trabajando en un anillo:
-                                distancia=self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main)
-                            if(distancia<=enlace.longitud):#el candidato seleccionado cumple con la restricción de distancia del enlace
+                            distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
+                            if(distancia<=enlace.longitud+TOLERANCIA_DISTANCIA):#el candidato seleccionado cumple con la restricción de distancia del enlace
                                 #if(clave in self.neighbors or clave in self.vecinosConectadosDinamicos):
                                     #print("no puede ser ese nodo esta en mis vecinos")
                                 new_package=Paquete(self.id,0)#a este paquete se le puede agregar lo que sea
@@ -323,10 +324,7 @@ class ComplexNetwork(Model):
                                 #envío la solicitud al nodo con el que me quiero conectar mediante la ruta de menor longitud encontrada previamente
                                 newevent = Event("SOLICITUD-CONEXION", event.time + 1.0, nextStep, self.id, new_package)            
                                 self.transmit(newevent)
-                                #if(self.__main.grafo!=3):
-                                    #print("soy",self.id,"mando",newevent.name,"a",clave,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlace.idEnlace,"la distancia del enlace es",self.__encaminamiento.distancia(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
-                                #else:
-                                    #print("soy",self.id,"mando",newevent.name,"a",clave,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlace.idEnlace,"la distancia del enlace es",self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
+                                #print("soy",self.id,"mando",newevent.name,"a",clave,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlace.idEnlace,"la distancia del enlace es",self.__encaminamiento.distancia(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
                                 #print("soy",self.id,"elimino a",clave,"de mi f_n")
 
                                 del self.f_n[clave]#elimino al nodo de la lista de frecuencias para que no se considere en futuros ciclos
@@ -356,11 +354,8 @@ class ComplexNetwork(Model):
                             #reviso si se puede hacer el recableado:
                             distancia=-1
                             if(clave is not None):
-                                if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
-                                    distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
-                                else:#si estoy trabajando en un anillo:
-                                    distancia=self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main)
-                            if(clave is not None and self.f_n[clave]>=self.frecNodo and distancia<=enlaceReconectar.longitud):
+                                distancia=self.__encaminamiento.distancia(self.id,clave,self.__main)
+                            if(clave is not None and self.f_n[clave]>=self.frecNodo and distancia<=enlaceReconectar.longitud+TOLERANCIA_DISTANCIA):
                                 nodoConexion=clave
                             if(nodoConexion!=-1):
                                 #print("soy",self.id,"elegi a",nodoConexion,"como mi candidato a CONEXION")
@@ -391,10 +386,7 @@ class ComplexNetwork(Model):
                                 #envio la solicitud al nodo con el que me quiero conectar mediante la ruta de menor longitud encontrada previamente
                                 newevent = Event("SOLICITUD-CONEXION", event.time + 1.0, nextStep, self.id, new_package)            
                                 self.transmit(newevent)
-                                #if(self.__main.grafo!=3):#si no estoy trabajando en un anillo:
-                                    #print("soy",self.id,"mando",newevent.name,"a",nodoConexion,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlaceReconectar.idEnlace,"la distancia del enlace es",self.__encaminamiento.distancia(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
-                                #else:#si estoy trabajando en un anillo:
-                                    #print("soy",self.id,"mando",newevent.name,"a",nodoConexion,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlaceReconectar.idEnlace,"la distancia del enlace es",self.__encaminamiento.distanciaAnillo(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
+                                #print("soy",self.id,"mando",newevent.name,"a",nodoConexion,"en el tiempo",newevent.time,"mediante mi enlace dinamico numero",enlaceReconectar.idEnlace,"la distancia del enlace es",self.__encaminamiento.distancia(self.id,clave,self.__main),"la ruta a seguir es",new_package.rutaAuxiliar,"ahorita envio el mensaje a",nextStep)
                             #else:
                                 #print("soy",self.id,"no encontre a nadie con quien reconectarme, por lo tanto no hago nada")
                         #else:
